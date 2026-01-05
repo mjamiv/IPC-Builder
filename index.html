@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WBS Terminal v1.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'JetBrains Mono', monospace;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0a0a;
+            color: #ffd700;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        /* Terminal Window */
+        .terminal {
+            border: 2px solid #ffd700;
+            background: #0d0d0d;
+        }
+        
+        .terminal-header {
+            background: #ffd700;
+            color: #000;
+            padding: 8px 16px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .terminal-body {
+            padding: 24px;
+        }
+        
+        /* Progress Bar */
+        .progress-bar {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 24px;
+            font-size: 12px;
+        }
+        
+        .progress-step {
+            flex: 1;
+            text-align: center;
+            padding: 8px 4px;
+            border: 1px solid #333;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .progress-step.active {
+            background: #ffd700;
+            color: #000;
+            border-color: #ffd700;
+        }
+        
+        .progress-step.completed {
+            background: #2d2d00;
+            color: #ffd700;
+            border-color: #ffd700;
+        }
+        
+        .progress-step:hover {
+            border-color: #ffd700;
+        }
+        
+        /* Section */
+        .section-title {
+            color: #fff;
+            font-size: 18px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .section-title::before {
+            content: ">";
+            color: #ffd700;
+        }
+        
+        .section-desc {
+            color: #888;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        
+        /* Inputs */
+        input[type="text"],
+        input[type="number"],
+        input[type="date"],
+        select {
+            background: #000;
+            border: 1px solid #444;
+            color: #ffd700;
+            padding: 12px;
+            width: 100%;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        input:focus,
+        select:focus {
+            border-color: #ffd700;
+        }
+        
+        input::placeholder {
+            color: #555;
+        }
+        
+        /* Buttons */
+        .btn {
+            background: transparent;
+            border: 2px solid #ffd700;
+            color: #ffd700;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            background: #ffd700;
+            color: #000;
+        }
+        
+        .btn-primary {
+            background: #ffd700;
+            color: #000;
+        }
+        
+        .btn-primary:hover {
+            background: #fff;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        /* Discipline Grid */
+        .disc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        
+        .disc-item {
+            border: 1px solid #333;
+            padding: 10px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            color: #888;
+            transition: all 0.2s;
+        }
+        
+        .disc-item:hover {
+            border-color: #ffd700;
+            color: #ffd700;
+        }
+        
+        .disc-item.selected {
+            background: #ffd700;
+            color: #000;
+            border-color: #ffd700;
+        }
+        
+        .disc-item::before {
+            content: "[ ] ";
+        }
+        
+        .disc-item.selected::before {
+            content: "[X] ";
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        th {
+            background: #1a1a00;
+            color: #ffd700;
+            text-align: left;
+            padding: 10px 12px;
+            border: 1px solid #333;
+            font-weight: 600;
+        }
+        
+        td {
+            padding: 8px 12px;
+            border: 1px solid #333;
+            color: #ccc;
+        }
+        
+        tr:hover td {
+            background: #1a1a00;
+        }
+        
+        .table-input {
+            background: transparent;
+            border: none;
+            color: #ffd700;
+            width: 100%;
+            padding: 4px;
+            text-align: right;
+        }
+        
+        .table-input:focus {
+            outline: 1px solid #ffd700;
+        }
+        
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #333;
+        }
+        
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Quick Tags */
+        .quick-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .quick-tag {
+            background: #1a1a00;
+            border: 1px solid #444;
+            color: #ffd700;
+            padding: 4px 10px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        
+        .quick-tag:hover {
+            background: #2d2d00;
+            border-color: #ffd700;
+        }
+        
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        .kpi-card {
+            border: 1px solid #ffd700;
+            padding: 16px;
+            text-align: center;
+        }
+        
+        .kpi-value {
+            font-size: 24px;
+            color: #ffd700;
+            font-weight: 700;
+        }
+        
+        .kpi-label {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            background: #000;
+            border: 1px solid #333;
+            padding: 20px;
+            margin-top: 24px;
+        }
+        
+        /* Filters */
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+        
+        /* Status */
+        .status-ok {
+            color: #00ff00;
+        }
+        
+        .status-err {
+            color: #ff4444;
+        }
+        
+        /* Results Table */
+        .results-table {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #333;
+        }
+        
+        .results-table thead {
+            position: sticky;
+            top: 0;
+        }
+        
+        .results-table tfoot {
+            position: sticky;
+            bottom: 0;
+        }
+        
+        .results-table tfoot td {
+            background: #ffd700;
+            color: #000;
+            font-weight: 700;
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #111;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #ffd700;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .filters {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .disc-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ASCII decorations */
+        .ascii-line {
+            color: #444;
+            font-size: 12px;
+            margin: 16px 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        /* Blinking cursor */
+        .cursor::after {
+            content: "_";
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="terminal" style="margin-bottom: 20px;">
+            <div class="terminal-header">
+                <span>■ WBS TERMINAL v1.0</span>
+                <span id="status-text">READY</span>
+            </div>
+        </div>
+
+        <!-- Main Terminal -->
+        <div class="terminal">
+            <div class="terminal-body">
+                <!-- Progress Bar -->
+                <div id="progress-section" class="progress-bar">
+                    <div class="progress-step active" onclick="goToStep(1)">1:PHASES</div>
+                    <div class="progress-step" onclick="goToStep(2)">2:DISCIPLINES</div>
+                    <div class="progress-step" onclick="goToStep(3)">3:PACKAGES</div>
+                    <div class="progress-step" onclick="goToStep(4)">4:BUDGET</div>
+                    <div class="progress-step" onclick="goToStep(5)">5:CLAIMING</div>
+                    <div class="progress-step" onclick="goToStep(6)">6:SCHEDULE</div>
+                </div>
+
+                <!-- Step 1: Phases -->
+                <div id="step1" class="step-content">
+                    <div class="section-title">PROJECT PHASES</div>
+                    <div class="section-desc">Enter project phases separated by commas</div>
+                    
+                    <input type="text" id="phases-input" value="Base Design, ESDC, TSCD, Construction Support">
+                    
+                    <div class="quick-tags">
+                        <span class="quick-tag" onclick="addQuickPhase('Base Design')">+Base Design</span>
+                        <span class="quick-tag" onclick="addQuickPhase('ESDC')">+ESDC</span>
+                        <span class="quick-tag" onclick="addQuickPhase('TSCD')">+TSCD</span>
+                        <span class="quick-tag" onclick="addQuickPhase('Construction Support')">+Construction</span>
+                        <span class="quick-tag" onclick="addQuickPhase('Closeout')">+Closeout</span>
+                    </div>
+                </div>
+
+                <!-- Step 2: Disciplines -->
+                <div id="step2" class="step-content hidden">
+                    <div class="section-title">PROJECT DISCIPLINES</div>
+                    <div class="section-desc">Select disciplines involved in the project</div>
+                    
+                    <div class="disc-grid" id="disciplines-grid"></div>
+                    
+                    <div style="display: flex; gap: 8px; margin-top: 16px;">
+                        <input type="text" id="custom-discipline" placeholder="Custom discipline..." style="flex: 1;">
+                        <button class="btn btn-sm" onclick="addCustomDiscipline()">ADD</button>
+                        <button class="btn btn-sm" onclick="selectAllDisciplines()">ALL</button>
+                    </div>
+                    
+                    <div style="margin-top: 12px; color: #888; font-size: 12px;">
+                        Selected: <span id="selected-count" style="color: #ffd700;">0</span>
+                    </div>
+                </div>
+
+                <!-- Step 3: Packages -->
+                <div id="step3" class="step-content hidden">
+                    <div class="section-title">DELIVERABLE PACKAGES</div>
+                    <div class="section-desc">Enter package milestones separated by commas</div>
+                    
+                    <input type="text" id="packages-input" value="Preliminary, Interim, 50%, 90%, RFC">
+                    
+                    <div class="quick-tags">
+                        <span class="quick-tag" onclick="addQuickPackage('Preliminary')">+Preliminary</span>
+                        <span class="quick-tag" onclick="addQuickPackage('Interim')">+Interim</span>
+                        <span class="quick-tag" onclick="addQuickPackage('50%')">+50%</span>
+                        <span class="quick-tag" onclick="addQuickPackage('90%')">+90%</span>
+                        <span class="quick-tag" onclick="addQuickPackage('RFC')">+RFC</span>
+                        <span class="quick-tag" onclick="addQuickPackage('As-Built')">+As-Built</span>
+                    </div>
+                </div>
+
+                <!-- Step 4: Budget -->
+                <div id="step4" class="step-content hidden">
+                    <div class="section-title">DISCIPLINE BUDGETS</div>
+                    <div class="section-desc">Enter total budget per discipline (distributed by claiming %)</div>
+                    
+                    <div style="max-height: 350px; overflow-y: auto;">
+                        <table id="budget-table"></table>
+                    </div>
+                    
+                    <div class="ascii-line">────────────────────────────────────────────────────</div>
+                    
+                    <div style="display: flex; justify-content: space-between; color: #fff;">
+                        <span>TOTAL PROJECT BUDGET:</span>
+                        <span id="total-budget" style="color: #ffd700; font-size: 18px;">$0</span>
+                    </div>
+                </div>
+
+                <!-- Step 5: Claiming -->
+                <div id="step5" class="step-content hidden">
+                    <div class="section-title">CLAIMING SCHEME</div>
+                    <div class="section-desc">Set claiming % per package (must total 100%)</div>
+                    
+                    <div style="max-height: 350px; overflow-y: auto;">
+                        <table id="claiming-table"></table>
+                    </div>
+                </div>
+
+                <!-- Step 6: Schedule -->
+                <div id="step6" class="step-content hidden">
+                    <div class="section-title">PROJECT SCHEDULE</div>
+                    <div class="section-desc">Set start/end dates per package</div>
+                    
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        <table id="dates-table"></table>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="nav-buttons">
+                    <button id="prev-btn" class="btn hidden" onclick="prevStep()">← BACK</button>
+                    <div></div>
+                    <button id="next-btn" class="btn btn-primary" onclick="nextStep()">NEXT →</button>
+                    <button id="generate-btn" class="btn btn-primary hidden" onclick="generateWBS()">GENERATE WBS</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="results-section" class="hidden" style="margin-top: 20px;">
+            <!-- KPIs -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-budget">$0</div>
+                    <div class="kpi-label">TOTAL BUDGET</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-wbs">0</div>
+                    <div class="kpi-label">WBS ELEMENTS</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-disc">0</div>
+                    <div class="kpi-label">DISCIPLINES</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value" id="kpi-months">0</div>
+                    <div class="kpi-label">MONTHS</div>
+                </div>
+            </div>
+
+            <!-- WBS Table -->
+            <div class="terminal">
+                <div class="terminal-header">
+                    <span>■ WBS COST TABLE</span>
+                    <div>
+                        <button class="btn btn-sm" onclick="exportCSV()" style="margin-right: 8px;">EXPORT CSV</button>
+                        <button class="btn btn-sm" onclick="editWBS()">EDIT</button>
+                    </div>
+                </div>
+                <div class="terminal-body">
+                    <div class="results-table">
+                        <table id="wbs-table"></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="terminal" style="margin-top: 20px;">
+                <div class="terminal-header">
+                    <span>■ PERFORMANCE CHART</span>
+                </div>
+                <div class="terminal-body">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>PHASE</label>
+                            <select id="filter-phase" onchange="updateChart()">
+                                <option value="all">All Phases</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>DISCIPLINE</label>
+                            <select id="filter-discipline" onchange="updateChart()">
+                                <option value="all">All Disciplines</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>VIEW</label>
+                            <select id="view-type" onchange="updateChart()">
+                                <option value="cumulative">Cumulative</option>
+                                <option value="monthly">Monthly</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>CHART</label>
+                            <select id="chart-type" onchange="updateChart()">
+                                <option value="line">Line</option>
+                                <option value="bar">Bar</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="performance-chart" height="300"></canvas>
+                    </div>
+                    
+                    <div style="margin-top: 16px; font-size: 12px; display: flex; gap: 24px;">
+                        <span><span style="color: #ffd700;">━━</span> PLANNED (BCWS)</span>
+                        <span><span style="color: #00ff00;">┅┅</span> ACTUAL (ACWP) - TBD</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data
+        let projectData = {
+            phases: [],
+            disciplines: [],
+            packages: [],
+            budgets: {},
+            claiming: {},
+            dates: {}
+        };
+
+        let currentStep = 1;
+        let chart = null;
+
+        // Discipline list with pre-selected items
+        const allDisciplines = [
+            { name: 'Structures', selected: true },
+            { name: 'Design Management', selected: true },
+            { name: 'Civil', selected: true },
+            { name: 'Drainage', selected: true },
+            { name: 'Electrical', selected: true },
+            { name: 'Environmental', selected: true },
+            { name: 'Traffic', selected: true },
+            { name: 'ITS', selected: false },
+            { name: 'Mechanical', selected: false },
+            { name: 'Geotechnical', selected: false },
+            { name: 'Survey', selected: false },
+            { name: 'Landscape', selected: false },
+            { name: 'Utilities', selected: false },
+            { name: 'Lighting', selected: false },
+            { name: 'Pavement', selected: false },
+            { name: 'Bridges', selected: false },
+            { name: 'Safety', selected: false },
+            { name: 'QA/QC', selected: false }
+        ];
+
+        // Example budgets
+        const exampleBudgets = {
+            'Structures': 450000,
+            'Design Management': 180000,
+            'Civil': 320000,
+            'Drainage': 95000,
+            'Electrical': 210000,
+            'Environmental': 85000,
+            'Traffic': 140000,
+            'ITS': 125000,
+            'Mechanical': 175000,
+            'Geotechnical': 110000,
+            'Survey': 65000,
+            'Landscape': 55000,
+            'Utilities': 90000,
+            'Lighting': 75000,
+            'Pavement': 280000,
+            'Bridges': 520000,
+            'Safety': 60000,
+            'QA/QC': 95000
+        };
+
+        // Default claiming scheme
+        const defaultClaiming = [10, 15, 25, 30, 20];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initDisciplines();
+            updateStatus('READY');
+        });
+
+        function updateStatus(text) {
+            document.getElementById('status-text').textContent = text;
+        }
+
+        function initDisciplines() {
+            const grid = document.getElementById('disciplines-grid');
+            grid.innerHTML = allDisciplines.map(d => 
+                `<div class="disc-item ${d.selected ? 'selected' : ''}" onclick="toggleDisc(this)" data-name="${d.name}">${d.name}</div>`
+            ).join('');
+            updateSelectedCount();
+        }
+
+        function toggleDisc(el) {
+            el.classList.toggle('selected');
+            updateSelectedCount();
+        }
+
+        function selectAllDisciplines() {
+            document.querySelectorAll('.disc-item').forEach(el => el.classList.add('selected'));
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = document.querySelectorAll('.disc-item.selected').length;
+            document.getElementById('selected-count').textContent = count;
+        }
+
+        function addCustomDiscipline() {
+            const input = document.getElementById('custom-discipline');
+            const name = input.value.trim();
+            if (name) {
+                const grid = document.getElementById('disciplines-grid');
+                grid.innerHTML += `<div class="disc-item selected" onclick="toggleDisc(this)" data-name="${name}">${name}</div>`;
+                exampleBudgets[name] = 100000;
+                input.value = '';
+                updateSelectedCount();
+            }
+        }
+
+        function addQuickPhase(phase) {
+            const input = document.getElementById('phases-input');
+            const phases = input.value.split(',').map(p => p.trim()).filter(p => p);
+            if (!phases.includes(phase)) {
+                phases.push(phase);
+                input.value = phases.join(', ');
+            }
+        }
+
+        function addQuickPackage(pkg) {
+            const input = document.getElementById('packages-input');
+            const packages = input.value.split(',').map(p => p.trim()).filter(p => p);
+            if (!packages.includes(pkg)) {
+                packages.push(pkg);
+                input.value = packages.join(', ');
+            }
+        }
+
+        function updateProgress() {
+            document.querySelectorAll('.progress-step').forEach((el, i) => {
+                el.classList.remove('active', 'completed');
+                if (i + 1 < currentStep) el.classList.add('completed');
+                if (i + 1 === currentStep) el.classList.add('active');
+            });
+        }
+
+        function showStep(step) {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`step${step}`).classList.remove('hidden');
+            
+            document.getElementById('prev-btn').classList.toggle('hidden', step === 1);
+            document.getElementById('next-btn').classList.toggle('hidden', step === 6);
+            document.getElementById('generate-btn').classList.toggle('hidden', step !== 6);
+            
+            updateProgress();
+            updateStatus(`STEP ${step}/6`);
+        }
+
+        function goToStep(step) {
+            if (step < currentStep) {
+                saveCurrentStep();
+                currentStep = step;
+                showStep(step);
+            }
+        }
+
+        function saveCurrentStep() {
+            switch(currentStep) {
+                case 1:
+                    projectData.phases = document.getElementById('phases-input').value.split(',').map(p => p.trim()).filter(p => p);
+                    break;
+                case 2:
+                    projectData.disciplines = Array.from(document.querySelectorAll('.disc-item.selected')).map(el => el.dataset.name);
+                    break;
+                case 3:
+                    projectData.packages = document.getElementById('packages-input').value.split(',').map(p => p.trim()).filter(p => p);
+                    break;
+                case 4:
+                    document.querySelectorAll('.budget-input').forEach(input => {
+                        projectData.budgets[input.dataset.disc] = parseFloat(input.value) || 0;
+                    });
+                    break;
+                case 5:
+                    document.querySelectorAll('.claiming-input').forEach(input => {
+                        projectData.claiming[input.dataset.key] = parseFloat(input.value) || 0;
+                    });
+                    break;
+                case 6:
+                    document.querySelectorAll('.date-start').forEach(input => {
+                        const key = input.dataset.key;
+                        const endInput = document.querySelector(`.date-end[data-key="${key}"]`);
+                        projectData.dates[key] = { start: input.value, end: endInput.value };
+                    });
+                    break;
+            }
+        }
+
+        function validate() {
+            switch(currentStep) {
+                case 1:
+                    if (!document.getElementById('phases-input').value.trim()) {
+                        alert('Enter at least one phase.');
+                        return false;
+                    }
+                    break;
+                case 2:
+                    if (document.querySelectorAll('.disc-item.selected').length === 0) {
+                        alert('Select at least one discipline.');
+                        return false;
+                    }
+                    break;
+                case 3:
+                    if (!document.getElementById('packages-input').value.trim()) {
+                        alert('Enter at least one package.');
+                        return false;
+                    }
+                    break;
+            }
+            return true;
+        }
+
+        function nextStep() {
+            if (!validate()) return;
+            saveCurrentStep();
+            
+            if (currentStep < 6) {
+                currentStep++;
+                showStep(currentStep);
+                
+                if (currentStep === 4) buildBudgetTable();
+                if (currentStep === 5) buildClaimingTable();
+                if (currentStep === 6) buildDatesTable();
+            }
+        }
+
+        function prevStep() {
+            saveCurrentStep();
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+            }
+        }
+
+        function buildBudgetTable() {
+            const table = document.getElementById('budget-table');
+            let html = `
+                <thead>
+                    <tr>
+                        <th>DISCIPLINE</th>
+                        <th style="text-align: right; width: 200px;">TOTAL BUDGET</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            projectData.disciplines.forEach(disc => {
+                const budget = projectData.budgets[disc] || exampleBudgets[disc] || 100000;
+                html += `
+                    <tr>
+                        <td>${disc}</td>
+                        <td>
+                            <input type="number" class="table-input budget-input" data-disc="${disc}" value="${budget}">
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody>';
+            table.innerHTML = html;
+            
+            document.querySelectorAll('.budget-input').forEach(input => {
+                input.addEventListener('input', updateTotalBudget);
+            });
+            updateTotalBudget();
+        }
+
+        function updateTotalBudget() {
+            let total = 0;
+            document.querySelectorAll('.budget-input').forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            document.getElementById('total-budget').textContent = '$' + total.toLocaleString();
+        }
+
+        function buildClaimingTable() {
+            const table = document.getElementById('claiming-table');
+            const numPkgs = projectData.packages.length;
+            
+            let html = `
+                <thead>
+                    <tr>
+                        <th>DISCIPLINE</th>
+                        ${projectData.packages.map(p => `<th style="text-align: center;">${p}</th>`).join('')}
+                        <th style="text-align: center;">TOTAL</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            projectData.disciplines.forEach(disc => {
+                html += `<tr><td>${disc}</td>`;
+                
+                projectData.packages.forEach((pkg, i) => {
+                    const key = `${disc}-${pkg}`;
+                    const defaultVal = defaultClaiming[i] || Math.floor(100 / numPkgs);
+                    const val = projectData.claiming[key] !== undefined ? projectData.claiming[key] : defaultVal;
+                    
+                    html += `
+                        <td style="text-align: center;">
+                            <input type="number" class="table-input claiming-input" style="text-align: center; width: 60px;" 
+                                data-key="${key}" data-disc="${disc}" value="${val}" min="0" max="100">%
+                        </td>
+                    `;
+                });
+                
+                html += `<td class="claiming-total" data-disc="${disc}" style="text-align: center;">0%</td></tr>`;
+            });
+            
+            html += '</tbody>';
+            table.innerHTML = html;
+            
+            document.querySelectorAll('.claiming-input').forEach(input => {
+                input.addEventListener('input', updateClaimingTotals);
+            });
+            updateClaimingTotals();
+        }
+
+        function updateClaimingTotals() {
+            projectData.disciplines.forEach(disc => {
+                let total = 0;
+                document.querySelectorAll(`.claiming-input[data-disc="${disc}"]`).forEach(input => {
+                    total += parseFloat(input.value) || 0;
+                });
+                
+                const cell = document.querySelector(`.claiming-total[data-disc="${disc}"]`);
+                cell.textContent = total + '%';
+                cell.className = `claiming-total ${total === 100 ? 'status-ok' : 'status-err'}`;
+            });
+        }
+
+        function buildDatesTable() {
+            const table = document.getElementById('dates-table');
+            const today = new Date();
+            const fmt = d => d.toISOString().split('T')[0];
+            
+            let html = `
+                <thead>
+                    <tr>
+                        <th>DISCIPLINE</th>
+                        <th>PACKAGE</th>
+                        <th>START</th>
+                        <th>END</th>
+                        <th style="text-align: center;">DAYS</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            projectData.disciplines.forEach(disc => {
+                projectData.packages.forEach((pkg, i) => {
+                    const key = `${disc}-${pkg}`;
+                    
+                    const startDate = new Date(today);
+                    startDate.setDate(startDate.getDate() + (i * 45));
+                    const endDate = new Date(startDate);
+                    endDate.setDate(endDate.getDate() + 42);
+                    
+                    const saved = projectData.dates[key] || {};
+                    
+                    html += `
+                        <tr>
+                            <td>${i === 0 ? disc : ''}</td>
+                            <td style="color: #ffd700;">${pkg}</td>
+                            <td><input type="date" class="table-input date-start" data-key="${key}" value="${saved.start || fmt(startDate)}"></td>
+                            <td><input type="date" class="table-input date-end" data-key="${key}" value="${saved.end || fmt(endDate)}"></td>
+                            <td class="duration-cell" data-key="${key}" style="text-align: center;">--</td>
+                        </tr>
+                    `;
+                });
+            });
+            
+            html += '</tbody>';
+            table.innerHTML = html;
+            
+            document.querySelectorAll('.date-start, .date-end').forEach(input => {
+                input.addEventListener('change', updateDurations);
+            });
+            updateDurations();
+        }
+
+        function updateDurations() {
+            document.querySelectorAll('.duration-cell').forEach(cell => {
+                const key = cell.dataset.key;
+                const start = document.querySelector(`.date-start[data-key="${key}"]`).value;
+                const end = document.querySelector(`.date-end[data-key="${key}"]`).value;
+                
+                if (start && end) {
+                    const days = Math.ceil((new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24));
+                    cell.textContent = days > 0 ? days : 'ERR';
+                    cell.className = `duration-cell ${days > 0 ? 'status-ok' : 'status-err'}`;
+                }
+            });
+        }
+
+        function generateWBS() {
+            saveCurrentStep();
+            
+            document.getElementById('progress-section').classList.add('hidden');
+            document.querySelector('.terminal').style.display = 'none';
+            document.getElementById('results-section').classList.remove('hidden');
+            
+            buildWBSTable();
+            populateFilters();
+            createChart();
+            updateKPIs();
+            updateStatus('WBS GENERATED');
+        }
+
+        function updateKPIs() {
+            let total = 0;
+            let wbsCount = 0;
+            let minDate = null, maxDate = null;
+            
+            projectData.disciplines.forEach(disc => {
+                total += projectData.budgets[disc] || 0;
+                wbsCount += projectData.packages.length * projectData.phases.length;
+                
+                projectData.packages.forEach(pkg => {
+                    const d = projectData.dates[`${disc}-${pkg}`];
+                    if (d) {
+                        const s = new Date(d.start), e = new Date(d.end);
+                        if (!minDate || s < minDate) minDate = s;
+                        if (!maxDate || e > maxDate) maxDate = e;
+                    }
+                });
+            });
+            
+            const months = minDate && maxDate ? Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24 * 30)) : 0;
+            
+            document.getElementById('kpi-budget').textContent = '$' + total.toLocaleString();
+            document.getElementById('kpi-wbs').textContent = wbsCount;
+            document.getElementById('kpi-disc').textContent = projectData.disciplines.length;
+            document.getElementById('kpi-months').textContent = months;
+        }
+
+        function buildWBSTable() {
+            const table = document.getElementById('wbs-table');
+            let grandTotal = 0;
+            
+            let html = `
+                <thead>
+                    <tr>
+                        <th>WBS#</th>
+                        <th>PHASE</th>
+                        <th>DISCIPLINE</th>
+                        <th>PACKAGE</th>
+                        <th style="text-align: right;">BUDGET</th>
+                        <th style="text-align: center;">%</th>
+                        <th>START</th>
+                        <th>END</th>
+                        <th style="text-align: right;">ACTUAL</th>
+                        <th style="text-align: right;">VAR</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+            
+            projectData.phases.forEach((phase, pi) => {
+                projectData.disciplines.forEach((disc, di) => {
+                    const discBudget = projectData.budgets[disc] || 0;
+                    
+                    projectData.packages.forEach((pkg, ki) => {
+                        const key = `${disc}-${pkg}`;
+                        const claimPct = projectData.claiming[key] || 0;
+                        const pkgBudget = discBudget * (claimPct / 100);
+                        const dates = projectData.dates[key] || { start: '-', end: '-' };
+                        const wbs = `${pi+1}.${di+1}.${ki+1}`;
+                        
+                        grandTotal += pkgBudget;
+                        
+                        html += `
+                            <tr>
+                                <td style="color: #ffd700;">${wbs}</td>
+                                <td>${phase}</td>
+                                <td>${disc}</td>
+                                <td>${pkg}</td>
+                                <td style="text-align: right;">$${pkgBudget.toLocaleString()}</td>
+                                <td style="text-align: center;">${claimPct}%</td>
+                                <td>${dates.start}</td>
+                                <td>${dates.end}</td>
+                                <td style="text-align: right; color: #666;">$0</td>
+                                <td style="text-align: right; color: #00ff00;">$${pkgBudget.toLocaleString()}</td>
+                            </tr>
+                        `;
+                    });
+                });
+            });
+            
+            html += `
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4">GRAND TOTAL</td>
+                        <td style="text-align: right;">$${grandTotal.toLocaleString()}</td>
+                        <td></td>
+                        <td colspan="2"></td>
+                        <td style="text-align: right;">$0</td>
+                        <td style="text-align: right;">$${grandTotal.toLocaleString()}</td>
+                    </tr>
+                </tfoot>
+            `;
+            
+            table.innerHTML = html;
+        }
+
+        function populateFilters() {
+            document.getElementById('filter-phase').innerHTML = '<option value="all">All Phases</option>' +
+                projectData.phases.map(p => `<option value="${p}">${p}</option>`).join('');
+            
+            document.getElementById('filter-discipline').innerHTML = '<option value="all">All Disciplines</option>' +
+                projectData.disciplines.map(d => `<option value="${d}">${d}</option>`).join('');
+        }
+
+        function createChart() {
+            const ctx = document.getElementById('performance-chart').getContext('2d');
+            if (chart) chart.destroy();
+            
+            const data = getChartData();
+            const type = document.getElementById('chart-type').value;
+            
+            chart = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'PLANNED',
+                            data: data.planned,
+                            borderColor: '#ffd700',
+                            backgroundColor: type === 'bar' ? '#ffd700' : 'rgba(255, 215, 0, 0.1)',
+                            borderWidth: 2,
+                            fill: type === 'line',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'ACTUAL',
+                            data: data.actual,
+                            borderColor: '#00ff00',
+                            backgroundColor: type === 'bar' ? '#00ff00' : 'rgba(0, 255, 0, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#1a1a1a',
+                            titleColor: '#ffd700',
+                            bodyColor: '#fff',
+                            borderColor: '#ffd700',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: ctx => ctx.dataset.label + ': $' + ctx.raw.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: '#333' },
+                            ticks: {
+                                color: '#888',
+                                callback: v => '$' + (v/1000).toFixed(0) + 'K'
+                            }
+                        },
+                        x: {
+                            grid: { color: '#222' },
+                            ticks: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getChartData() {
+            const discFilter = document.getElementById('filter-discipline').value;
+            const viewType = document.getElementById('view-type').value;
+            
+            let allDates = [];
+            let items = [];
+            
+            projectData.disciplines.forEach(disc => {
+                if (discFilter !== 'all' && disc !== discFilter) return;
+                const discBudget = projectData.budgets[disc] || 0;
+                
+                projectData.packages.forEach(pkg => {
+                    const key = `${disc}-${pkg}`;
+                    const dates = projectData.dates[key];
+                    const claimPct = projectData.claiming[key] || 0;
+                    const pkgBudget = discBudget * (claimPct / 100);
+                    
+                    if (dates && dates.start && dates.end) {
+                        items.push({
+                            start: new Date(dates.start),
+                            end: new Date(dates.end),
+                            budget: pkgBudget
+                        });
+                        allDates.push(new Date(dates.start), new Date(dates.end));
+                    }
+                });
+            });
+            
+            if (!allDates.length) return { labels: ['N/A'], planned: [0], actual: [0] };
+            
+            allDates.sort((a, b) => a - b);
+            const startDate = new Date(allDates[0].getFullYear(), allDates[0].getMonth(), 1);
+            const endDate = new Date(allDates[allDates.length-1].getFullYear(), allDates[allDates.length-1].getMonth() + 1, 1);
+            
+            const labels = [], planned = [], actual = [];
+            let cumulative = 0;
+            const curr = new Date(startDate);
+            
+            while (curr <= endDate) {
+                labels.push(curr.toLocaleDateString('en-US', { year: '2-digit', month: 'short' }));
+                
+                let monthly = 0;
+                items.forEach(item => {
+                    const months = Math.max(1, Math.ceil((item.end - item.start) / (1000*60*60*24*30)));
+                    if (curr >= item.start && curr <= item.end) monthly += item.budget / months;
+                });
+                
+                if (viewType === 'cumulative') {
+                    cumulative += monthly;
+                    planned.push(Math.round(cumulative));
+                } else {
+                    planned.push(Math.round(monthly));
+                }
+                actual.push(0);
+                
+                curr.setMonth(curr.getMonth() + 1);
+            }
+            
+            return { labels, planned, actual };
+        }
+
+        function updateChart() {
+            createChart();
+        }
+
+        function editWBS() {
+            document.getElementById('progress-section').classList.remove('hidden');
+            document.querySelector('.terminal').style.display = 'block';
+            document.getElementById('results-section').classList.add('hidden');
+            currentStep = 1;
+            showStep(1);
+        }
+
+        function exportCSV() {
+            let csv = 'WBS,Phase,Discipline,Package,Budget,Claim%,Start,End,Actual,Variance\n';
+            
+            projectData.phases.forEach((phase, pi) => {
+                projectData.disciplines.forEach((disc, di) => {
+                    const discBudget = projectData.budgets[disc] || 0;
+                    
+                    projectData.packages.forEach((pkg, ki) => {
+                        const key = `${disc}-${pkg}`;
+                        const claimPct = projectData.claiming[key] || 0;
+                        const pkgBudget = discBudget * (claimPct / 100);
+                        const dates = projectData.dates[key] || { start: '', end: '' };
+                        
+                        csv += `${pi+1}.${di+1}.${ki+1},"${phase}","${disc}","${pkg}",${pkgBudget},${claimPct},${dates.start},${dates.end},0,${pkgBudget}\n`;
+                    });
+                });
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'wbs_structure.csv';
+            a.click();
+        }
+    </script>
+</body>
+</html>
