@@ -6,8 +6,9 @@ This file provides guidance to Claude Code when working with the IPC Builder (WB
 
 **WBS Terminal v1.0** is a zero-build, single-page web application for generating Work Breakdown Structures (WBS) for engineering projects. It provides a terminal-themed interface for project planning, budgeting, and schedule management.
 
-**Location:** `/Volumes/mjamiv_2/claude-code/ipc-builder/ipc-builder/`
-**GitHub:** https://github.com/mjamiv/ipc-builder
+**Location:** `/Volumes/mjamiv_2/claude-code/ipc-builder/`
+**GitHub:** https://github.com/mjamiv/IPC-Builder
+**Live URL:** https://mjamiv.github.io/IPC-Builder/
 
 ## Tech Stack
 
@@ -21,15 +22,16 @@ This file provides guidance to Claude Code when working with the IPC Builder (WB
 
 ```bash
 # No build step required
-open ipc-builder/index.html
+open index.html
 ```
 
 Or serve via local server:
 ```bash
-cd ipc-builder
 python3 -m http.server 8000
 # Navigate to http://localhost:8000
 ```
+
+Or access the live deployment at: https://mjamiv.github.io/IPC-Builder/
 
 ## Application Architecture
 
@@ -43,9 +45,9 @@ All code is contained in `index.html`:
 
 ```javascript
 projectData = {
-    phases: [],        // Project phases (e.g., "Base Design", "ESDC")
+    phases: [],        // Project phases (e.g., "Base", "ESDC", "TSCD")
     disciplines: [],   // Engineering disciplines (e.g., "Structures", "Civil")
-    packages: [],      // Deliverable milestones (e.g., "50%", "90%", "RFC")
+    packages: [],      // Deliverable milestones (e.g., "Preliminary", "Interim", "Final", "RFC")
     budgets: {},       // { discipline: totalBudget }
     claiming: {},      // { "discipline-package": claimPercentage }
     dates: {}          // { "discipline-package": { start, end } }
@@ -77,23 +79,42 @@ projectData = {
 - CSV export of complete WBS table
 - Filename: `wbs_structure.csv`
 
+## Recent Changes
+
+The following updates were made to the application defaults:
+
+1. **Simplified default phases** - Changed from full list to minimal `"Base,"` to encourage customization
+2. **Updated phase quick tags** - Replaced "Construction Support" with "As-Builts"
+3. **Revised package defaults** - Changed from percentage-based (50%, 90%) to milestone-based (Preliminary, Interim, Final, RFC, As-Buit)
+4. **Reduced pre-selected disciplines** - Only "Structures" and "Design Management" are now pre-selected (down from 7 disciplines)
+5. **Added database roadmap note** - Code comment indicates future database integration for budget values
+6. **Updated README** - Added live app URL: https://mjamiv.github.io/IPC-Builder/
+
 ## Default Values
 
+### Default Phases
+- **Input default:** `"Base,"` - Minimal default, user expected to customize
+- **Quick-add tags:** Base, ESDC, TSCD, As-Builts, Closeout
+
+### Default Packages
+- **Input default:** `"Preliminary, Interim, Final, RFC, As-Buit"` (Note: "As-Buit" has a typo)
+- **Quick-add tags:** Preliminary, Interim, Final, RFC, As-Built
+
 ### Pre-selected Disciplines
+Only 2 disciplines are pre-selected by default:
 - Structures
 - Design Management
-- Civil
-- Drainage
-- Electrical
-- Environmental
-- Traffic
+
+All other disciplines (Civil, Drainage, Electrical, Environmental, Traffic, ITS, Mechanical, Geotechnical, Survey, Landscape, Utilities, Lighting, Pavement, Bridges, Safety, QA/QC) are available but not pre-selected.
 
 ### Example Budgets
-Hardcoded in `exampleBudgets` object (lines 641-660):
+Hardcoded in `exampleBudgets` object (lines 639-660):
 - Structures: $450,000
 - Design Management: $180,000
 - Civil: $320,000
 - (etc.)
+
+**Note:** Comment in code indicates future plan to use database for budgets instead of hardcoded values.
 
 ### Default Claiming Scheme
 `[10, 15, 25, 30, 20]` - Distribution across 5 packages
@@ -197,9 +218,12 @@ Breakpoint: `768px` (line 364)
    - Update validation as needed
 
 3. **Default Values**
-   - Edit `allDisciplines` array (line 619)
-   - Edit `exampleBudgets` object (line 641)
-   - Edit `defaultClaiming` array (line 663)
+   - Edit phases input default value (line 425)
+   - Edit packages input default value (line 459)
+   - Edit `allDisciplines` array (line 618) - controls pre-selected disciplines
+   - Edit `exampleBudgets` object (line 639) - hardcoded budget values
+   - Edit `defaultClaiming` array (line 663) - claiming percentage distribution
+   - Modify quick-add tags for phases (lines 427-432) and packages (lines 461-467)
 
 ### Testing Checklist
 - [ ] All 6 steps navigate correctly
@@ -226,10 +250,12 @@ Breakpoint: `768px` (line 364)
 - Import CSV functionality
 - Multiple project management
 - Actual cost tracking integration
+- **Database integration for budgets** (noted in code comments)
 - Gantt chart visualization
 - Resource allocation
 - Template library
 - Print/PDF export
+- Fix typo in default packages ("As-Buit" → "As-Built")
 
 ## Performance Considerations
 
