@@ -50,7 +50,16 @@ projectData = {
     packages: [],      // Deliverable milestones (e.g., "Preliminary", "Interim", "Final", "RFC")
     budgets: {},       // { discipline: totalBudget }
     claiming: {},      // { "discipline-package": claimPercentage }
-    dates: {}          // { "discipline-package": { start, end } }
+    dates: {},         // { "discipline-package": { start, end } }
+    calculator: {      // Cost estimator data (NEW)
+        totalConstructionCost: 0,
+        designFeePercent: 15,
+        projectType: 'Highway/Roadway',
+        totalDesignFee: 0,
+        complexityOverrides: {},  // Manual complexity settings per discipline
+        isCalculated: false,
+        manualEdits: {}          // Track which budgets were manually edited
+    }
 }
 ```
 
@@ -60,9 +69,55 @@ projectData = {
 1. **PHASES** - Define project phases (comma-separated)
 2. **DISCIPLINES** - Select engineering disciplines (grid selection)
 3. **PACKAGES** - Define deliverable packages/milestones
-4. **BUDGET** - Set total budget per discipline
+4. **BUDGET** - Set total budget per discipline (with cost estimator)
 5. **CLAIMING** - Set claiming % per package (must total 100% per discipline)
 6. **SCHEDULE** - Set start/end dates for each package
+
+### Cost Estimator (Step 4: Budget)
+
+**Purpose:** Calculate discipline budgets based on industry standards with real-time variance indicators.
+
+**Calculator Inputs:**
+- Total Construction Cost ($)
+- Design Fee (% of Construction)
+- Project Type (Bridge, Highway/Roadway, Drainage/Utilities)
+- Project Complexity (Low, Medium, High - reference only)
+
+**Calculation Method:**
+```
+Total Design Fee = Construction Cost × Design Fee %
+Budget per Discipline = Total Design Fee × (Normalized Distribution %)
+```
+
+**Project Types & Auto-Complexity:**
+- **Bridge:** Structures=High, Civil=High, Geotechnical=High, Electrical=Low, Traffic=Low
+- **Highway/Roadway:** Civil=High, Traffic=High, Pavement=High, Drainage=High, Survey=High
+- **Drainage/Utilities:** Drainage=High, Utilities=High, Environmental=High, Civil=Medium
+
+**Industry Distribution Percentages:**
+- 3 project types × 18 disciplines × 3 complexity levels
+- Percentages automatically normalized to sum to 100% based on selected disciplines
+- Example: Bridge → Structures → High = 28% (before normalization)
+
+**Industry Comparison Indicators:**
+- **↑** (red) - Above industry range (tooltip shows variance %)
+- **↓** (green) - Below industry range (tooltip shows variance %)
+- **•** (gold) - Within industry range
+- Indicators update in real-time when budgets manually edited
+
+**User Experience:**
+- Collapsible calculator section (expands on first visit)
+- Advanced Settings for per-discipline complexity overrides
+- Manual edits preserved during recalculation
+- Click header to re-expand and recalculate
+- Calculator collapses after calculation with status update
+
+**Key Features:**
+- Smart manual edit tracking (excludes edited disciplines from recalculation)
+- Percentage normalization ensures budgets sum to total design fee
+- Benchmark variance tracking for major disciplines
+- Responsive 2-column layout (1-column on mobile)
+- Smooth collapse/expand animations
 
 ### WBS Generation
 - Hierarchical WBS numbering: `phase.discipline.package` (e.g., 1.1.1)
@@ -81,7 +136,28 @@ projectData = {
 
 ## Recent Changes
 
-The following updates were made to the application defaults:
+### Latest: Cost Estimator Feature (January 2026)
+
+**Major new feature:** Added cost estimator/pricing calculator to Budget tab (Step 4).
+
+**What's New:**
+- Collapsible calculator with 4 inputs (Construction Cost, Design Fee %, Project Type, Complexity)
+- 3 project types with auto-complexity mapping for 18 disciplines
+- Industry-standard distribution percentages (54 unique combinations)
+- Real-time budget calculation with percentage normalization
+- Industry comparison indicators (↑↓•) with hover tooltips showing variance
+- Advanced settings for per-discipline complexity overrides
+- Smart manual edit tracking preserves user changes during recalculation
+- +598 lines of code added to index.html
+
+**Technical Details:**
+- New `calculator` property in `projectData` object
+- 3 new data constants: `projectComplexityMap`, `industryDistribution`, `industryBenchmarks`
+- 9 new functions for calculator logic and UI
+- Modified `buildBudgetTable()` to include indicator column
+- Added calculator CSS with tooltip system
+
+### Previous Updates (Application Defaults)
 
 1. **Simplified default phases** - Changed from full list to minimal `"Base,"` to encourage customization
 2. **Updated phase quick tags** - Replaced "Construction Support" with "As-Builts"
@@ -119,6 +195,32 @@ Hardcoded in `exampleBudgets` object (lines 639-660):
 ### Default Claiming Scheme
 `[10, 15, 25, 30, 20]` - Distribution across 5 packages
 
+### Cost Estimator Data (NEW)
+
+**Project Complexity Map** (lines 673-699)
+- 3 project types × 18 disciplines
+- Auto-assigns Low/Medium/High complexity per discipline based on project type
+- Example: Bridge projects auto-assign Structures=High, Traffic=Low
+
+**Industry Distribution Percentages** (lines 701-763)
+- 3 project types × 18 disciplines × 3 complexity levels = 162 data points
+- Base percentages before normalization
+- Example distributions:
+  - Bridge → Structures → High: 28%
+  - Highway/Roadway → Civil → High: 22%
+  - Drainage/Utilities → Drainage → High: 26%
+
+**Industry Benchmarks** (lines 765-788)
+- Variance calculation ranges for major disciplines
+- Structure: `{ min, max, typical }` as ratios (0.0-1.0)
+- Currently covers ~6 key disciplines per project type
+- Used for ↑↓• indicator determination
+
+**Calculator Defaults:**
+- Design Fee %: 15%
+- Project Type: "Highway/Roadway"
+- Project Complexity: "Medium" (reference only)
+
 ## Color Palette
 
 Terminal/console theme with gold accents:
@@ -131,27 +233,39 @@ Terminal/console theme with gold accents:
 ## Key Functions
 
 ### Navigation
-- `goToStep(step)` - Jump to specific step (line 748)
-- `nextStep()` - Validate and advance (line 811)
-- `prevStep()` - Go back (line 825)
-- `showStep(step)` - Display step content (line 736)
+- `goToStep(step)` - Jump to specific step
+- `nextStep()` - Validate and advance
+- `prevStep()` - Go back
+- `showStep(step)` - Display step content
 
 ### Data Building
-- `buildBudgetTable()` - Generate budget input table (line 833)
-- `buildClaimingTable()` - Generate claiming % grid (line 874)
-- `buildDatesTable()` - Generate schedule table (line 930)
-- `buildWBSTable()` - Generate final WBS output (line 1035)
+- `buildBudgetTable()` - Generate budget input table with indicator column (line 1163)
+- `buildClaimingTable()` - Generate claiming % grid
+- `buildDatesTable()` - Generate schedule table
+- `buildWBSTable()` - Generate final WBS output
+
+### Cost Estimator Functions (NEW)
+- `initCalculator()` - Initialize calculator inputs and event listeners (line 1299)
+- `updateCalculatorTotal()` - Calculate and display total design fee (line 1288)
+- `toggleCalculator()` - Expand/collapse calculator section (line 1210)
+- `showComplexityOverrides()` - Show/hide advanced settings (line 1223)
+- `buildComplexityOverrideGrid()` - Generate complexity override controls (line 1234)
+- `saveComplexityOverride()` - Save manual complexity settings (line 1260)
+- `updateComplexityDefaults()` - Reset overrides when project type changes (line 1274)
+- `calculateBudgets()` - Main calculation logic with normalization (line 1305)
+- `updateIndustryIndicators()` - Calculate variance and display indicators (line 1377)
+- `updateTotalBudget()` - Sum budget inputs, trigger indicator updates (line 1196)
 
 ### Chart Management
-- `createChart()` - Initialize Chart.js (line 1113)
-- `getChartData()` - Calculate chart data points (line 1180)
-- `updateChart()` - Refresh chart with filters (line 1241)
+- `createChart()` - Initialize Chart.js
+- `getChartData()` - Calculate chart data points
+- `updateChart()` - Refresh chart with filters
 
 ### Utilities
-- `validate()` - Step validation (line 787)
-- `saveCurrentStep()` - Persist current data (line 756)
-- `exportCSV()` - Generate CSV download (line 1253)
-- `updateKPIs()` - Calculate summary metrics (line 1008)
+- `validate()` - Step validation
+- `saveCurrentStep()` - Persist current data
+- `exportCSV()` - Generate CSV download
+- `updateKPIs()` - Calculate summary metrics
 
 ## UI Components
 
@@ -181,12 +295,30 @@ Terminal/console theme with gold accents:
   - Disciplines count
   - Project duration (months)
 
+### Cost Estimator Calculator (NEW)
+- Collapsible section with header (click to expand/collapse)
+- 2-column grid layout for inputs (responsive)
+- Total Design Fee display box
+- Action buttons: "Advanced Settings" and "Calculate Estimates"
+- Advanced settings section (hidden by default):
+  - 3-column grid of complexity overrides
+  - Asterisk (*) indicates manual overrides
+- Status indicator in header shows calculation state
+
+### Industry Indicators (NEW)
+- Small symbols in "IND" column of budget table
+- Color-coded: Red (above), Green (below), Gold (within)
+- Tooltip on hover with benchmark details
+- Real-time updates on budget changes
+
 ## Responsive Design
 
-Breakpoint: `768px` (line 364)
+Breakpoint: `768px` (line 530)
 - KPI grid: 4 columns → 2 columns
 - Filters: 4 columns → 2 columns
 - Disciplines grid: auto-fill → 2 columns
+- **Calculator grid: 2 columns → 1 column** (NEW)
+- **Complexity override grid: 3 columns → 1 column** (NEW)
 
 ## Code Conventions
 
@@ -225,7 +357,16 @@ Breakpoint: `768px` (line 364)
    - Edit `defaultClaiming` array (line 663) - claiming percentage distribution
    - Modify quick-add tags for phases (lines 427-432) and packages (lines 461-467)
 
+4. **Cost Estimator Data (NEW)**
+   - Edit `projectComplexityMap` (lines 673-699) - auto-complexity assignments
+   - Edit `industryDistribution` (lines 701-763) - distribution percentages
+   - Edit `industryBenchmarks` (lines 765-788) - variance calculation ranges
+   - Modify calculator HTML inputs (lines 618-676) for different options
+   - Adjust calculator CSS (lines 396-537) for styling changes
+
 ### Testing Checklist
+
+**Basic Navigation:**
 - [ ] All 6 steps navigate correctly
 - [ ] Budget totals calculate properly
 - [ ] Claiming percentages validate (100% per discipline)
@@ -235,6 +376,26 @@ Breakpoint: `768px` (line 364)
 - [ ] CSV export downloads correctly
 - [ ] Responsive breakpoints work
 - [ ] Edit mode returns to wizard
+
+**Cost Estimator (NEW):**
+- [ ] Calculator expands on first visit to Step 4
+- [ ] Construction cost × design fee % = correct total
+- [ ] All 3 project types calculate correctly
+- [ ] Percentages sum to total design fee
+- [ ] Calculator collapses after calculation
+- [ ] Click header re-expands calculator
+- [ ] Status updates correctly ("Configure inputs" → "Estimates applied")
+- [ ] Industry indicators (↑↓•) appear after calculation
+- [ ] Tooltips display correct ranges and variance
+- [ ] Manual budget edits update indicators immediately
+- [ ] Manual edits preserved during recalculation
+- [ ] Advanced settings show/hide complexity grid
+- [ ] Complexity overrides affect calculations
+- [ ] Asterisk (*) marks manual complexity overrides
+- [ ] Project type change clears overrides
+- [ ] Calculator validates construction cost (required, > 0)
+- [ ] Calculator validates design fee (1-30%)
+- [ ] Responsive layout: 2-col → 1-col on mobile
 
 ## Known Limitations
 
@@ -256,6 +417,10 @@ Breakpoint: `768px` (line 364)
 - Template library
 - Print/PDF export
 - Fix typo in default packages ("As-Buit" → "As-Built")
+- **Expand industry benchmarks** - Add benchmark ranges for all 18 disciplines
+- **Custom project types** - Allow users to create and save custom project type profiles
+- **Export calculator settings** - Save/load calculator configurations
+- **Historical comparison** - Compare current project budgets to past projects
 
 ## Performance Considerations
 
