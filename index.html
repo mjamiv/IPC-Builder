@@ -527,12 +527,154 @@
             opacity: 1;
         }
 
+        /* Claiming Preset Panel */
+        .claiming-preset-panel {
+            background-color: #0a0a0a;
+            border: 1px solid #ffd700;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .preset-header {
+            background-color: #1a1a1a;
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 12px;
+            user-select: none;
+            border-bottom: 1px solid #ffd700;
+        }
+
+        .preset-header:hover {
+            background-color: #222;
+        }
+
+        .preset-body {
+            padding: 20px;
+            display: block;
+        }
+
+        .preset-body.hidden {
+            display: none;
+        }
+
+        .preset-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .preset-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .preset-option:hover {
+            border-color: #ffd700;
+            background-color: #222;
+        }
+
+        .preset-option input[type="radio"] {
+            margin-top: 2px;
+            cursor: pointer;
+            accent-color: #ffd700;
+        }
+
+        .preset-label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .preset-name {
+            color: #ffd700;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .preset-desc {
+            color: #888;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .preset-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .preset-actions .btn {
+            flex: 1;
+            padding: 10px;
+            background-color: #1a1a1a;
+            color: #ffd700;
+            border: 1px solid #ffd700;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .preset-actions .btn:hover {
+            background-color: #ffd700;
+            color: #0a0a0a;
+        }
+
+        .preset-actions .btn-primary {
+            background-color: #ffd700;
+            color: #0a0a0a;
+        }
+
+        .preset-actions .btn-primary:hover {
+            background-color: #ffed4e;
+        }
+
+        .preset-preview {
+            padding: 15px;
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            font-size: 11px;
+            color: #888;
+            line-height: 1.6;
+        }
+
+        .preset-preview.hidden {
+            display: none;
+        }
+
+        .preset-preview strong {
+            color: #ffd700;
+        }
+
         @media (max-width: 768px) {
             .calc-grid {
                 grid-template-columns: 1fr;
             }
             .complexity-override-grid {
                 grid-template-columns: 1fr;
+            }
+            .preset-options {
+                grid-template-columns: 1fr;
+            }
+            .preset-actions {
+                flex-direction: column;
             }
         }
     </style>
@@ -693,7 +835,58 @@
                 <div id="step5" class="step-content hidden">
                     <div class="section-title">CLAIMING SCHEME</div>
                     <div class="section-desc">Set claiming % per package (must total 100%)</div>
-                    
+
+                    <!-- PRESET SELECTOR PANEL -->
+                    <div class="claiming-preset-panel">
+                        <div class="preset-header" onclick="toggleClaimingPresets()">
+                            <span>▼ SCHEME PRESETS</span>
+                            <span id="preset-status" style="color: #888; font-size: 11px;">Click to apply a preset</span>
+                        </div>
+
+                        <div id="preset-body" class="preset-body">
+                            <div class="preset-options">
+                                <label class="preset-option">
+                                    <input type="radio" name="claiming-scheme" value="frontLoaded">
+                                    <div class="preset-label">
+                                        <span class="preset-name">Front-Loaded</span>
+                                        <span class="preset-desc">Higher % early, declining (30→10%)</span>
+                                    </div>
+                                </label>
+
+                                <label class="preset-option">
+                                    <input type="radio" name="claiming-scheme" value="backLoaded">
+                                    <div class="preset-label">
+                                        <span class="preset-name">Back-Loaded</span>
+                                        <span class="preset-desc">Lower % early, increasing (10→30%)</span>
+                                    </div>
+                                </label>
+
+                                <label class="preset-option">
+                                    <input type="radio" name="claiming-scheme" value="bellCurve">
+                                    <div class="preset-label">
+                                        <span class="preset-name">Bell Curve</span>
+                                        <span class="preset-desc">Peak in middle (10-20-40-20-10)</span>
+                                    </div>
+                                </label>
+
+                                <label class="preset-option">
+                                    <input type="radio" name="claiming-scheme" value="linear">
+                                    <div class="preset-label">
+                                        <span class="preset-name">Linear/Even</span>
+                                        <span class="preset-desc">Equal distribution across all</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="preset-actions">
+                                <button class="btn btn-sm" onclick="previewScheme()">Preview</button>
+                                <button class="btn btn-primary btn-sm" onclick="applyClaimingScheme()">Apply to All Disciplines</button>
+                            </div>
+
+                            <div id="preview-display" class="preset-preview hidden"></div>
+                        </div>
+                    </div>
+
                     <div style="max-height: 350px; overflow-y: auto;">
                         <table id="claiming-table"></table>
                     </div>
@@ -874,6 +1067,34 @@
 
         // Default claiming scheme
         const defaultClaiming = [10, 15, 25, 30, 20];
+
+        // Claiming scheme presets
+        const claimingSchemes = {
+            frontLoaded: {
+                name: 'Front-Loaded',
+                description: 'Higher % early, declining',
+                baseline: [30, 25, 20, 15, 10],
+                pattern: 'descending'
+            },
+            backLoaded: {
+                name: 'Back-Loaded',
+                description: 'Lower % early, increasing',
+                baseline: [10, 15, 20, 25, 30],
+                pattern: 'ascending'
+            },
+            bellCurve: {
+                name: 'Bell Curve',
+                description: 'Peak in middle',
+                baseline: [10, 20, 40, 20, 10],
+                pattern: 'bell'
+            },
+            linear: {
+                name: 'Linear/Even',
+                description: 'Equal distribution',
+                baseline: [20, 20, 20, 20, 20],
+                pattern: 'equal'
+            }
+        };
 
         // Project complexity mapping per project type
         const projectComplexityMap = {
@@ -1508,11 +1729,222 @@
                 document.querySelectorAll(`.claiming-input[data-disc="${disc}"]`).forEach(input => {
                     total += parseFloat(input.value) || 0;
                 });
-                
+
                 const cell = document.querySelector(`.claiming-total[data-disc="${disc}"]`);
                 cell.textContent = total + '%';
                 cell.className = `claiming-total ${total === 100 ? 'status-ok' : 'status-err'}`;
             });
+        }
+
+        // ============ CLAIMING PRESET FUNCTIONS ============
+
+        // Normalize array to sum to 100%
+        function normalizeToHundred(arr) {
+            const sum = arr.reduce((a, b) => a + b, 0);
+            if (sum === 0) return arr;
+
+            const normalized = arr.map(val => (val / sum) * 100);
+            const rounded = normalized.map(val => Math.round(val));
+
+            // Adjust for rounding errors
+            const roundedSum = rounded.reduce((a, b) => a + b, 0);
+            if (roundedSum !== 100) {
+                const diff = 100 - roundedSum;
+                const maxIndex = rounded.indexOf(Math.max(...rounded));
+                rounded[maxIndex] += diff;
+            }
+
+            return rounded;
+        }
+
+        // Linear/Even distribution
+        function distributeEvenly(count) {
+            if (count <= 0) return [];
+            const base = Math.floor(100 / count);
+            const remainder = 100 - (base * count);
+            const result = new Array(count).fill(base);
+            result[result.length - 1] += remainder;
+            return result;
+        }
+
+        // Front-Loaded (descending) pattern
+        function createDescendingPattern(count) {
+            if (count === 1) return [100];
+            if (count === 2) return [60, 40];
+
+            const maxVal = 30;
+            const minVal = 10;
+            const step = (maxVal - minVal) / (count - 1);
+
+            const result = [];
+            for (let i = 0; i < count; i++) {
+                result.push(maxVal - (step * i));
+            }
+
+            return normalizeToHundred(result);
+        }
+
+        // Back-Loaded (ascending) pattern
+        function createAscendingPattern(count) {
+            if (count === 1) return [100];
+            if (count === 2) return [40, 60];
+
+            const minVal = 10;
+            const maxVal = 30;
+            const step = (maxVal - minVal) / (count - 1);
+
+            const result = [];
+            for (let i = 0; i < count; i++) {
+                result.push(minVal + (step * i));
+            }
+
+            return normalizeToHundred(result);
+        }
+
+        // Bell Curve pattern
+        function createBellPattern(count) {
+            if (count === 1) return [100];
+            if (count === 2) return [50, 50];
+            if (count === 3) return [25, 50, 25];
+
+            const result = [];
+            const midpoint = (count - 1) / 2;
+            const peakValue = 40;
+            const edgeValue = 8;
+
+            for (let i = 0; i < count; i++) {
+                const distanceFromMid = Math.abs(i - midpoint);
+                const maxDistance = midpoint;
+                const ratio = 1 - (distanceFromMid / maxDistance);
+                const value = edgeValue + (ratio * (peakValue - edgeValue));
+                result.push(value);
+            }
+
+            return normalizeToHundred(result);
+        }
+
+        // Adjust scheme to package count
+        function adjustSchemeToPackageCount(schemeKey, packageCount) {
+            if (packageCount <= 0) return [];
+
+            const scheme = claimingSchemes[schemeKey];
+            if (!scheme) return [];
+
+            switch (scheme.pattern) {
+                case 'equal':
+                    return distributeEvenly(packageCount);
+                case 'descending':
+                    return createDescendingPattern(packageCount);
+                case 'ascending':
+                    return createAscendingPattern(packageCount);
+                case 'bell':
+                    return createBellPattern(packageCount);
+                default:
+                    return distributeEvenly(packageCount);
+            }
+        }
+
+        // Toggle claiming presets panel
+        function toggleClaimingPresets() {
+            const body = document.getElementById('preset-body');
+            const header = document.querySelector('.preset-header span:first-child');
+
+            if (body.classList.contains('hidden')) {
+                body.classList.remove('hidden');
+                header.textContent = '▼ SCHEME PRESETS';
+            } else {
+                body.classList.add('hidden');
+                header.textContent = '▶ SCHEME PRESETS';
+            }
+        }
+
+        // Get selected scheme from radio buttons
+        function getSelectedScheme() {
+            const selected = document.querySelector('input[name="claiming-scheme"]:checked');
+            return selected ? selected.value : null;
+        }
+
+        // Preview scheme percentages
+        function previewScheme() {
+            const schemeKey = getSelectedScheme();
+            if (!schemeKey) {
+                alert('Please select a claiming scheme first.');
+                return;
+            }
+
+            const packageCount = projectData.packages.length;
+            if (packageCount === 0) {
+                alert('Please add packages first (Step 3).');
+                return;
+            }
+
+            const percentages = adjustSchemeToPackageCount(schemeKey, packageCount);
+            const scheme = claimingSchemes[schemeKey];
+
+            const previewDiv = document.getElementById('preview-display');
+            let previewHTML = `<strong>Preview: ${scheme.name}</strong><br>`;
+
+            projectData.packages.forEach((pkg, i) => {
+                previewHTML += `${pkg}: <strong>${percentages[i]}%</strong>`;
+                if (i < projectData.packages.length - 1) {
+                    previewHTML += ' | ';
+                }
+            });
+
+            const total = percentages.reduce((a, b) => a + b, 0);
+            previewHTML += `<br>Total: <strong style="color: ${total === 100 ? '#00ff00' : '#ff4444'}">${total}%</strong>`;
+
+            previewDiv.innerHTML = previewHTML;
+            previewDiv.classList.remove('hidden');
+        }
+
+        // Apply claiming scheme to all disciplines
+        function applyClaimingScheme() {
+            const schemeKey = getSelectedScheme();
+            if (!schemeKey) {
+                alert('Please select a claiming scheme first.');
+                return;
+            }
+
+            if (projectData.disciplines.length === 0) {
+                alert('Please add disciplines first (Step 2).');
+                return;
+            }
+
+            if (projectData.packages.length === 0) {
+                alert('Please add packages first (Step 3).');
+                return;
+            }
+
+            const packageCount = projectData.packages.length;
+            const percentages = adjustSchemeToPackageCount(schemeKey, packageCount);
+            const scheme = claimingSchemes[schemeKey];
+
+            // Apply to all disciplines
+            projectData.disciplines.forEach(disc => {
+                percentages.forEach((pct, i) => {
+                    const pkg = projectData.packages[i];
+                    const key = `${disc}-${pkg}`;
+                    projectData.claiming[key] = pct;
+                });
+            });
+
+            // Update UI
+            buildClaimingTable();
+
+            // Update status
+            const statusSpan = document.getElementById('preset-status');
+            statusSpan.textContent = `Applied: ${scheme.name}`;
+            statusSpan.style.color = '#00ff00';
+
+            // Collapse panel
+            const body = document.getElementById('preset-body');
+            const header = document.querySelector('.preset-header span:first-child');
+            body.classList.add('hidden');
+            header.textContent = '▶ SCHEME PRESETS';
+
+            // Clear preview
+            document.getElementById('preview-display').classList.add('hidden');
         }
 
         function buildDatesTable() {
