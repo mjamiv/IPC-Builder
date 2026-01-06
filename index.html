@@ -422,13 +422,13 @@
                     <div class="section-title">PROJECT PHASES</div>
                     <div class="section-desc">Enter project phases separated by commas</div>
                     
-                    <input type="text" id="phases-input" value="Base Design, ESDC, TSCD, Construction Support">
+                    <input type="text" id="phases-input" value="Base,">
                     
                     <div class="quick-tags">
-                        <span class="quick-tag" onclick="addQuickPhase('Base Design')">+Base Design</span>
+                        <span class="quick-tag" onclick="addQuickPhase('Base')">+Base Design</span>
                         <span class="quick-tag" onclick="addQuickPhase('ESDC')">+ESDC</span>
                         <span class="quick-tag" onclick="addQuickPhase('TSCD')">+TSCD</span>
-                        <span class="quick-tag" onclick="addQuickPhase('Construction Support')">+Construction</span>
+                        <span class="quick-tag" onclick="addQuickPhase('As-Builts')">+As-Builts</span>
                         <span class="quick-tag" onclick="addQuickPhase('Closeout')">+Closeout</span>
                     </div>
                 </div>
@@ -456,13 +456,12 @@
                     <div class="section-title">DELIVERABLE PACKAGES</div>
                     <div class="section-desc">Enter package milestones separated by commas</div>
                     
-                    <input type="text" id="packages-input" value="Preliminary, Interim, 50%, 90%, RFC">
+                    <input type="text" id="packages-input" value="Preliminary, Interim, Final, RFC, As-Buit">
                     
                     <div class="quick-tags">
                         <span class="quick-tag" onclick="addQuickPackage('Preliminary')">+Preliminary</span>
                         <span class="quick-tag" onclick="addQuickPackage('Interim')">+Interim</span>
-                        <span class="quick-tag" onclick="addQuickPackage('50%')">+50%</span>
-                        <span class="quick-tag" onclick="addQuickPackage('90%')">+90%</span>
+                        <span class="quick-tag" onclick="addQuickPackage('Final')">+Final</span>
                         <span class="quick-tag" onclick="addQuickPackage('RFC')">+RFC</span>
                         <span class="quick-tag" onclick="addQuickPackage('As-Built')">+As-Built</span>
                     </div>
@@ -619,11 +618,11 @@
         const allDisciplines = [
             { name: 'Structures', selected: true },
             { name: 'Design Management', selected: true },
-            { name: 'Civil', selected: true },
-            { name: 'Drainage', selected: true },
-            { name: 'Electrical', selected: true },
-            { name: 'Environmental', selected: true },
-            { name: 'Traffic', selected: true },
+            { name: 'Civil', selected: false },
+            { name: 'Drainage', selected: false },
+            { name: 'Electrical', selected: false },
+            { name: 'Environmental', selected: false },
+            { name: 'Traffic', selected: false },
             { name: 'ITS', selected: false },
             { name: 'Mechanical', selected: false },
             { name: 'Geotechnical', selected: false },
@@ -637,7 +636,7 @@
             { name: 'QA/QC', selected: false }
         ];
 
-        // Example budgets
+        // Example budgets [in the future we will use a database to get the budgets]
         const exampleBudgets = {
             'Structures': 450000,
             'Design Management': 180000,
