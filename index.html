@@ -418,10 +418,29 @@
                 width: 100%;
                 justify-content: center;
                 flex-wrap: wrap;
+                gap: 4px;
             }
             
             .terminal-header #status-text {
                 font-size: 11px;
+            }
+            
+            .terminal-header .btn-sm {
+                font-size: 10px;
+                padding: 3px 6px;
+                min-width: auto;
+            }
+            
+            /* Results section header buttons on mobile */
+            #results-section .terminal-header > div {
+                flex-wrap: wrap;
+                gap: 4px;
+            }
+            
+            #results-section .terminal-header .btn-sm {
+                font-size: 9px;
+                padding: 3px 5px;
+                margin-right: 4px !important;
             }
         }
 
@@ -989,7 +1008,10 @@
                 <div class="terminal-header">
                     <span>■ WBS COST TABLE</span>
                     <div>
-                        <button class="btn btn-sm" onclick="exportCSV()" style="margin-right: 8px;">EXPORT CSV</button>
+                        <button class="btn btn-sm" onclick="printReport()" style="margin-right: 8px;">PRINT</button>
+                        <button class="btn btn-sm" onclick="exportAllDataCSV()" style="margin-right: 8px;">EXPORT DATA</button>
+                        <button class="btn btn-sm" onclick="exportCSV()" style="margin-right: 8px;">EXPORT WBS</button>
+                        <button class="btn btn-sm" onclick="importData()" style="margin-right: 8px;">IMPORT</button>
                         <button class="btn btn-sm" onclick="editWBS()">EDIT</button>
                     </div>
                 </div>
@@ -2571,6 +2593,9 @@
             showStep(1);
         }
 
+        /**
+         * Exports WBS structure to CSV (output format)
+         */
         function exportCSV() {
             let csv = 'WBS,Phase,Discipline,Package,Budget,Claim%,Start,End,Actual,Variance\n';
             
@@ -2594,6 +2619,445 @@
             a.href = URL.createObjectURL(blob);
             a.download = 'wbs_structure.csv';
             a.click();
+        }
+
+        /**
+         * Exports all input data to CSV in a format that can be imported back
+         * Includes: phases, disciplines, packages, budgets, claiming, dates, calculator settings
+         */
+        function exportAllDataCSV() {
+            let csv = '# IPC Builder Project Data Export\n';
+            csv += '# This file can be imported to restore project settings\n';
+            csv += '# Format: Section,Key,Value\n\n';
+            
+            // Phases
+            csv += '[PHASES]\n';
+            projectData.phases.forEach(phase => {
+                csv += `Phase,${phase}\n`;
+            });
+            csv += '\n';
+            
+            // Disciplines
+            csv += '[DISCIPLINES]\n';
+            projectData.disciplines.forEach(discipline => {
+                csv += `Discipline,${discipline}\n`;
+            });
+            csv += '\n';
+            
+            // Packages
+            csv += '[PACKAGES]\n';
+            projectData.packages.forEach(packageName => {
+                csv += `Package,${packageName}\n`;
+            });
+            csv += '\n';
+            
+            // Budgets
+            csv += '[BUDGETS]\n';
+            csv += 'Discipline,Budget\n';
+            projectData.disciplines.forEach(discipline => {
+                const budget = projectData.budgets[discipline] || 0;
+                csv += `${discipline},${budget}\n`;
+            });
+            csv += '\n';
+            
+            // Claiming Percentages
+            csv += '[CLAIMING]\n';
+            csv += 'Discipline,Package,Percentage\n';
+            projectData.disciplines.forEach(discipline => {
+                projectData.packages.forEach(packageName => {
+                    const key = `${discipline}-${packageName}`;
+                    const percentage = projectData.claiming[key] || 0;
+                    csv += `${discipline},${packageName},${percentage}\n`;
+                });
+            });
+            csv += '\n';
+            
+            // Dates
+            csv += '[DATES]\n';
+            csv += 'Discipline,Package,Start,End\n';
+            projectData.disciplines.forEach(discipline => {
+                projectData.packages.forEach(packageName => {
+                    const key = `${discipline}-${packageName}`;
+                    const dates = projectData.dates[key] || { start: '', end: '' };
+                    csv += `${discipline},${packageName},${dates.start},${dates.end}\n`;
+                });
+            });
+            csv += '\n';
+            
+            // Calculator Settings
+            csv += '[CALCULATOR]\n';
+            csv += 'Setting,Value\n';
+            csv += `TotalConstructionCost,${projectData.calculator.totalConstructionCost}\n`;
+            csv += `DesignFeePercent,${projectData.calculator.designFeePercent}\n`;
+            csv += `ProjectType,${projectData.calculator.projectType}\n`;
+            csv += `TotalDesignFee,${projectData.calculator.totalDesignFee}\n`;
+            csv += `IsCalculated,${projectData.calculator.isCalculated}\n`;
+            
+            // Complexity Overrides
+            if (Object.keys(projectData.calculator.complexityOverrides).length > 0) {
+                csv += '\n[COMPLEXITY_OVERRIDES]\n';
+                csv += 'Discipline,Complexity\n';
+                Object.entries(projectData.calculator.complexityOverrides).forEach(([disc, complexity]) => {
+                    csv += `${disc},${complexity}\n`;
+                });
+            }
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'ipc_builder_project_data.csv';
+            a.click();
+        }
+
+        /**
+         * Imports project data from CSV file
+         */
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const csv = event.target.result;
+                        parseImportCSV(csv);
+                        alert('Data imported successfully! Returning to wizard...');
+                        editWBS();
+                    } catch (error) {
+                        alert('Error importing data: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        /**
+         * Parses imported CSV and populates projectData
+         * @param {string} csv - CSV file content
+         */
+        function parseImportCSV(csv) {
+            const lines = csv.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
+            
+            let currentSection = '';
+            const data = {
+                phases: [],
+                disciplines: [],
+                packages: [],
+                budgets: {},
+                claiming: {},
+                dates: {},
+                calculator: {
+                    totalConstructionCost: 0,
+                    designFeePercent: 15,
+                    projectType: 'Highway/Roadway',
+                    totalDesignFee: 0,
+                    complexityOverrides: {},
+                    isCalculated: false,
+                    manualEdits: {}
+                }
+            };
+            
+            lines.forEach(line => {
+                // Check for section headers
+                if (line.startsWith('[') && line.endsWith(']')) {
+                    currentSection = line.slice(1, -1);
+                    return;
+                }
+                
+                const parts = line.split(',').map(p => p.trim());
+                if (parts.length < 2) return;
+                
+                switch (currentSection) {
+                    case 'PHASES':
+                        if (parts[0] === 'Phase') {
+                            data.phases.push(parts[1]);
+                        }
+                        break;
+                    case 'DISCIPLINES':
+                        if (parts[0] === 'Discipline') {
+                            data.disciplines.push(parts[1]);
+                        }
+                        break;
+                    case 'PACKAGES':
+                        if (parts[0] === 'Package') {
+                            data.packages.push(parts[1]);
+                        }
+                        break;
+                    case 'BUDGETS':
+                        if (parts[0] !== 'Discipline') {
+                            data.budgets[parts[0]] = parseFloat(parts[1]) || 0;
+                        }
+                        break;
+                    case 'CLAIMING':
+                        if (parts[0] !== 'Discipline') {
+                            const key = `${parts[0]}-${parts[1]}`;
+                            data.claiming[key] = parseFloat(parts[2]) || 0;
+                        }
+                        break;
+                    case 'DATES':
+                        if (parts[0] !== 'Discipline') {
+                            const key = `${parts[0]}-${parts[1]}`;
+                            data.dates[key] = {
+                                start: parts[2] || '',
+                                end: parts[3] || ''
+                            };
+                        }
+                        break;
+                    case 'CALCULATOR':
+                        if (parts[0] !== 'Setting') {
+                            const setting = parts[0];
+                            const value = parts[1];
+                            if (setting === 'TotalConstructionCost') {
+                                data.calculator.totalConstructionCost = parseFloat(value) || 0;
+                            } else if (setting === 'DesignFeePercent') {
+                                data.calculator.designFeePercent = parseFloat(value) || 15;
+                            } else if (setting === 'ProjectType') {
+                                data.calculator.projectType = value;
+                            } else if (setting === 'TotalDesignFee') {
+                                data.calculator.totalDesignFee = parseFloat(value) || 0;
+                            } else if (setting === 'IsCalculated') {
+                                data.calculator.isCalculated = value === 'true';
+                            }
+                        }
+                        break;
+                    case 'COMPLEXITY_OVERRIDES':
+                        if (parts[0] !== 'Discipline') {
+                            data.calculator.complexityOverrides[parts[0]] = parts[1];
+                        }
+                        break;
+                }
+            });
+            
+            // Apply imported data to projectData
+            projectData = data;
+            
+            // Update UI if we're in the wizard
+            if (currentStep >= 1 && currentStep <= 6) {
+                loadImportedData();
+            }
+        }
+
+        /**
+         * Loads imported data into the wizard forms
+         */
+        function loadImportedData() {
+            // Step 1: Phases
+            if (projectData.phases.length > 0) {
+                document.getElementById('phases-input').value = projectData.phases.join(', ');
+            }
+            
+            // Step 2: Disciplines - restore selections
+            if (projectData.disciplines.length > 0) {
+                // Rebuild discipline grid with imported selections
+                const grid = document.getElementById('disciplines-grid');
+                let html = '';
+                
+                // First, mark all existing disciplines
+                allDisciplines.forEach(d => {
+                    const isSelected = projectData.disciplines.includes(d.name);
+                    html += `<div class="disc-item ${isSelected ? 'selected' : ''}" onclick="toggleDisc(this)" data-name="${d.name}">${d.name}</div>`;
+                });
+                
+                // Add any custom disciplines that aren't in allDisciplines
+                projectData.disciplines.forEach(discipline => {
+                    if (!allDisciplines.find(d => d.name === discipline)) {
+                        html += `<div class="disc-item selected" onclick="toggleDisc(this)" data-name="${discipline}">${discipline}</div>`;
+                    }
+                });
+                
+                grid.innerHTML = html;
+                updateSelectedCount();
+            }
+            
+            // Step 3: Packages
+            if (projectData.packages.length > 0) {
+                document.getElementById('packages-input').value = projectData.packages.join(', ');
+            }
+            
+            // Steps 4-6 will be populated when those steps are shown via buildBudgetTable, etc.
+        }
+
+        /**
+         * Opens print-friendly report view
+         */
+        function printReport() {
+            const printWindow = window.open('', '_blank');
+            const today = new Date().toLocaleDateString();
+            
+            let html = `
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WBS Terminal - Project Report</title>
+    <style>
+        @media print {
+            @page { margin: 1cm; }
+        }
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+            color: #000;
+            background: #fff;
+        }
+        h1 { color: #000; border-bottom: 3px solid #000; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 11px; }
+        th { background: #000; color: #fff; padding: 8px; text-align: left; }
+        td { padding: 6px 8px; border: 1px solid #ccc; }
+        tr:nth-child(even) { background: #f5f5f5; }
+        .kpi { display: flex; gap: 30px; margin: 20px 0; }
+        .kpi-item { flex: 1; border: 2px solid #000; padding: 15px; text-align: center; }
+        .kpi-value { font-size: 24px; font-weight: bold; }
+        .kpi-label { font-size: 12px; margin-top: 5px; }
+        .summary { margin: 20px 0; }
+        .summary-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #eee; }
+    </style>
+</head>
+<body>
+    <h1>WBS TERMINAL - PROJECT REPORT</h1>
+    <p><strong>Generated:</strong> ${today}</p>
+    
+    <div class="kpi">
+        <div class="kpi-item">
+            <div class="kpi-value">${formatCurrency(calculateTotalBudget())}</div>
+            <div class="kpi-label">Total Budget</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">${projectData.disciplines.length}</div>
+            <div class="kpi-label">Disciplines</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">${projectData.phases.length}</div>
+            <div class="kpi-label">Phases</div>
+        </div>
+        <div class="kpi-item">
+            <div class="kpi-value">${projectData.packages.length}</div>
+            <div class="kpi-label">Packages</div>
+        </div>
+    </div>
+    
+    <h2>Project Summary</h2>
+    <div class="summary">
+        <div class="summary-row"><strong>Phases:</strong> ${projectData.phases.join(', ')}</div>
+        <div class="summary-row"><strong>Disciplines:</strong> ${projectData.disciplines.join(', ')}</div>
+        <div class="summary-row"><strong>Packages:</strong> ${projectData.packages.join(', ')}</div>
+    </div>
+    
+    <h2>Discipline Budgets</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Discipline</th>
+                <th style="text-align: right;">Budget</th>
+            </tr>
+        </thead>
+        <tbody>
+`;
+            
+            projectData.disciplines.forEach(discipline => {
+                const budget = projectData.budgets[discipline] || 0;
+                html += `
+            <tr>
+                <td>${discipline}</td>
+                <td style="text-align: right;">${formatCurrency(budget)}</td>
+            </tr>`;
+            });
+            
+            html += `
+        </tbody>
+        <tfoot>
+            <tr>
+                <th>Total</th>
+                <th style="text-align: right;">${formatCurrency(calculateTotalBudget())}</th>
+            </tr>
+        </tfoot>
+    </table>
+    
+    <h2>Work Breakdown Structure</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>WBS#</th>
+                <th>Phase</th>
+                <th>Discipline</th>
+                <th>Package</th>
+                <th style="text-align: right;">Budget</th>
+                <th style="text-align: center;">Claim%</th>
+                <th>Start</th>
+                <th>End</th>
+            </tr>
+        </thead>
+        <tbody>
+`;
+            
+            let grandTotal = 0;
+            projectData.phases.forEach((phase, pi) => {
+                projectData.disciplines.forEach((discipline, di) => {
+                    const discBudget = projectData.budgets[discipline] || 0;
+                    projectData.packages.forEach((packageName, ki) => {
+                        const key = `${discipline}-${packageName}`;
+                        const claimPct = projectData.claiming[key] || 0;
+                        const pkgBudget = discBudget * (claimPct / 100);
+                        const dates = projectData.dates[key] || { start: '-', end: '-' };
+                        const wbs = `${pi+1}.${di+1}.${ki+1}`;
+                        grandTotal += pkgBudget;
+                        
+                        html += `
+            <tr>
+                <td>${wbs}</td>
+                <td>${phase}</td>
+                <td>${discipline}</td>
+                <td>${packageName}</td>
+                <td style="text-align: right;">${formatCurrency(pkgBudget)}</td>
+                <td style="text-align: center;">${claimPct}%</td>
+                <td>${dates.start}</td>
+                <td>${dates.end}</td>
+            </tr>`;
+                    });
+                });
+            });
+            
+            html += `
+        </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4">Grand Total</th>
+                <th style="text-align: right;">${formatCurrency(grandTotal)}</th>
+                <th colspan="3"></th>
+            </tr>
+        </tfoot>
+    </table>
+</body>
+</html>`;
+            
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => {
+                printWindow.print();
+            }, 250);
+        }
+
+        /**
+         * Calculates total budget from projectData
+         * @returns {number} Total budget amount
+         */
+        function calculateTotalBudget() {
+            return Object.values(projectData.budgets).reduce((sum, val) => sum + (val || 0), 0);
+        }
+
+        /**
+         * Formats number as currency string
+         * @param {number} amount - Amount to format
+         * @returns {string} Formatted currency string
+         */
+        function formatCurrency(amount) {
+            return '$' + (amount || 0).toLocaleString();
         }
     </script>
 </body>
