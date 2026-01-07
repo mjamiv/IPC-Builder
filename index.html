@@ -1605,17 +1605,17 @@
 
         /* AI Schedule Generator */
         .ai-schedule-section {
-            background: linear-gradient(135deg, #1a0a2e 0%, #0d0d1a 100%);
-            border: 1px solid #6b21a8;
+            background: linear-gradient(135deg, #1a1a00 0%, #0d0d0d 100%);
+            border: 1px solid #ffd700;
             border-radius: 8px;
             padding: 16px;
             margin-bottom: 16px;
         }
 
         .btn-ai {
-            background: linear-gradient(135deg, #6b21a8 0%, #4c1d95 100%);
-            border: 1px solid #7c3aed;
-            color: #fff;
+            background: linear-gradient(135deg, #ffd700 0%, #b8860b 100%);
+            border: 1px solid #ffd700;
+            color: #000;
             padding: 12px 24px;
             border-radius: 8px;
             font-size: 12px;
@@ -1628,9 +1628,9 @@
         }
 
         .btn-ai:hover {
-            background: linear-gradient(135deg, #7c3aed 0%, #6b21a8 100%);
+            background: linear-gradient(135deg, #ffdd33 0%, #ffd700 100%);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
         }
 
         .btn-ai:disabled {
@@ -1652,15 +1652,15 @@
         }
 
         .ai-schedule-options label {
-            color: #a78bfa;
+            color: #ffd700;
             font-size: 11px;
         }
 
         .ai-schedule-options input,
         .ai-schedule-options select {
-            background: #1a1a2e;
-            border: 1px solid #4c1d95;
-            color: #e9d5ff;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: #ffd700;
             padding: 8px 12px;
             border-radius: 6px;
             font-size: 12px;
@@ -1669,7 +1669,7 @@
         .ai-schedule-options input:focus,
         .ai-schedule-options select:focus {
             outline: none;
-            border-color: #7c3aed;
+            border-color: #ffd700;
         }
 
         .ai-schedule-loading {
@@ -1677,7 +1677,7 @@
             align-items: center;
             gap: 10px;
             margin-top: 12px;
-            color: #a78bfa;
+            color: #ffd700;
             font-size: 12px;
         }
 
@@ -1693,8 +1693,8 @@
 
         /* AI Insights Panel */
         .insights-panel {
-            background: linear-gradient(135deg, #0a1628 0%, #0d0d1a 100%);
-            border: 1px solid #1e3a5f;
+            background: linear-gradient(135deg, #1a1a00 0%, #0d0d0d 100%);
+            border: 1px solid #ffd700;
             border-radius: 12px;
             margin-bottom: 20px;
             overflow: hidden;
@@ -1705,23 +1705,23 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 20px;
-            background: linear-gradient(135deg, #1e3a5f 0%, #0a1628 100%);
+            background: linear-gradient(135deg, #2a2a00 0%, #1a1a00 100%);
             cursor: pointer;
             transition: all 0.2s;
         }
 
         .insights-header:hover {
-            background: linear-gradient(135deg, #2a4a6f 0%, #1a2638 100%);
+            background: linear-gradient(135deg, #3a3a00 0%, #2a2a00 100%);
         }
 
         .insights-header span:first-child {
-            color: #60a5fa;
+            color: #ffd700;
             font-size: 13px;
             font-weight: 600;
         }
 
         .insights-toggle-icon {
-            color: #60a5fa;
+            color: #ffd700;
             font-size: 10px;
             transition: transform 0.3s;
         }
@@ -1742,8 +1742,8 @@
         }
 
         .insight-card {
-            background: rgba(30, 58, 95, 0.3);
-            border: 1px solid #1e3a5f;
+            background: rgba(26, 26, 0, 0.5);
+            border: 1px solid #444;
             border-radius: 8px;
             padding: 16px;
         }
@@ -1760,7 +1760,7 @@
         }
 
         .insight-title {
-            color: #60a5fa;
+            color: #ffd700;
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
@@ -1775,25 +1775,26 @@
         }
 
         .insight-value.risk-low {
-            color: #4ade80;
+            color: #00ff00;
         }
 
         .insight-value.risk-medium {
-            color: #fbbf24;
+            color: #ffd700;
         }
 
         .insight-value.risk-high {
-            color: #f87171;
+            color: #ff4444;
         }
 
         .insight-details {
-            color: #94a3b8;
+            color: #888;
             font-size: 11px;
             line-height: 1.5;
         }
 
         .insights-suggestions {
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333;
             border-radius: 8px;
             padding: 16px;
         }
@@ -1818,15 +1819,15 @@
         }
 
         .suggestion-placeholder {
-            color: #64748b;
+            color: #666;
             font-size: 12px;
             text-align: center;
             padding: 20px;
         }
 
         .suggestion-item {
-            background: rgba(30, 58, 95, 0.3);
-            border: 1px solid #1e3a5f;
+            background: rgba(26, 26, 0, 0.5);
+            border: 1px solid #444;
             border-radius: 6px;
             padding: 12px;
             display: flex;
@@ -1844,14 +1845,14 @@
         }
 
         .suggestion-title {
-            color: #fff;
+            color: #ffd700;
             font-size: 12px;
             font-weight: 500;
             margin-bottom: 4px;
         }
 
         .suggestion-desc {
-            color: #94a3b8;
+            color: #888;
             font-size: 11px;
             line-height: 1.5;
         }
@@ -9078,15 +9079,15 @@ Be helpful, friendly, and context-aware. When users are on the Results page, you
                 
                 if (daysRemaining < 0) {
                     document.getElementById('insight-schedule-forecast').textContent = 'Complete';
-                    document.getElementById('insight-schedule-forecast').style.color = '#4ade80';
+                    document.getElementById('insight-schedule-forecast').style.color = '#00ff00';
                     document.getElementById('insight-schedule-details').textContent = 'Project end date has passed';
                 } else if (daysRemaining < 30) {
                     document.getElementById('insight-schedule-forecast').textContent = 'Final Phase';
-                    document.getElementById('insight-schedule-forecast').style.color = '#fbbf24';
+                    document.getElementById('insight-schedule-forecast').style.color = '#ffd700';
                     document.getElementById('insight-schedule-details').textContent = `${daysRemaining} days until scheduled completion`;
                 } else {
                     document.getElementById('insight-schedule-forecast').textContent = 'On Track';
-                    document.getElementById('insight-schedule-forecast').style.color = '#4ade80';
+                    document.getElementById('insight-schedule-forecast').style.color = '#00ff00';
                     document.getElementById('insight-schedule-details').textContent = 
                         `Completion: ${new Date(maxDate).toLocaleDateString()} (${Math.ceil(daysRemaining / 30)} months)`;
                 }
@@ -9100,15 +9101,15 @@ Be helpful, friendly, and context-aware. When users are on the Results page, you
             
             if (coeffVar < 0.5) {
                 document.getElementById('insight-budget-health').textContent = 'Balanced';
-                document.getElementById('insight-budget-health').style.color = '#4ade80';
+                document.getElementById('insight-budget-health').style.color = '#00ff00';
                 document.getElementById('insight-budget-details').textContent = 'Budget evenly distributed across disciplines';
             } else if (coeffVar < 1.0) {
                 document.getElementById('insight-budget-health').textContent = 'Moderate';
-                document.getElementById('insight-budget-health').style.color = '#fbbf24';
+                document.getElementById('insight-budget-health').style.color = '#ffd700';
                 document.getElementById('insight-budget-details').textContent = 'Some disciplines have significantly higher budgets';
             } else {
                 document.getElementById('insight-budget-health').textContent = 'Concentrated';
-                document.getElementById('insight-budget-health').style.color = '#f87171';
+                document.getElementById('insight-budget-health').style.color = '#ff4444';
                 document.getElementById('insight-budget-details').textContent = 'Budget heavily weighted toward few disciplines';
             }
         }
