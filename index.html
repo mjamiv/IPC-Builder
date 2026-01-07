@@ -2296,6 +2296,7 @@
                         <button class="btn btn-sm" onclick="collapseAllWBS()" style="margin-left: 8px;">COLLAPSE ALL</button>
                         <span style="margin: 0 12px; color: #666;">|</span>
                         <button class="btn btn-sm" onclick="printReport()">PRINT</button>
+                        <button class="btn btn-sm" onclick="exportProjectSummary()" style="margin-left: 8px;">EXPORT SUMMARY</button>
                         <button class="btn btn-sm" onclick="exportAllDataCSV()" style="margin-left: 8px;">EXPORT DATA</button>
                         <button class="btn btn-sm" onclick="exportCSV()" style="margin-left: 8px;">EXPORT WBS</button>
                         <button class="btn btn-sm" onclick="importData()" style="margin-left: 8px;">IMPORT</button>
@@ -2403,7 +2404,11 @@
                 complexityOverrides: {},
                 isCalculated: false,
                 manualEdits: {}
-            }
+            },
+            // RFP-extracted data for export
+            projectScope: '',
+            scheduleNotes: '',
+            disciplineScopes: {}
         };
 
         let currentStep = 1;
@@ -4500,6 +4505,131 @@
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
             a.download = 'ipc_builder_project_data.csv';
+            a.click();
+        }
+
+        /**
+         * Exports a comprehensive project summary with scope, disciplines, and WBS breakdown
+         * Formatted as a readable markdown document
+         */
+        function exportProjectSummary() {
+            const timestamp = new Date().toLocaleString();
+            let content = `# Project Summary Report\n`;
+            content += `Generated: ${timestamp}\n\n`;
+            
+            // Calculate totals
+            let totalBudget = 0;
+            projectData.disciplines.forEach(disc => {
+                totalBudget += projectData.budgets[disc] || 0;
+            });
+            
+            // Find date range
+            let minDate = null;
+            let maxDate = null;
+            Object.values(projectData.dates).forEach(d => {
+                if (d.start) {
+                    const start = new Date(d.start);
+                    if (!minDate || start < minDate) minDate = start;
+                }
+                if (d.end) {
+                    const end = new Date(d.end);
+                    if (!maxDate || end > maxDate) maxDate = end;
+                }
+            });
+            
+            // Executive Summary
+            content += `## Executive Summary\n\n`;
+            content += `| Metric | Value |\n`;
+            content += `|--------|-------|\n`;
+            content += `| Total Budget | $${formatNumber(totalBudget)} |\n`;
+            content += `| Disciplines | ${projectData.disciplines.length} |\n`;
+            content += `| Phases | ${projectData.phases.length} |\n`;
+            content += `| Deliverable Packages | ${projectData.packages.length} |\n`;
+            if (minDate && maxDate) {
+                const months = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24 * 30));
+                content += `| Project Duration | ~${months} months |\n`;
+                content += `| Start Date | ${minDate.toISOString().split('T')[0]} |\n`;
+                content += `| End Date | ${maxDate.toISOString().split('T')[0]} |\n`;
+            }
+            content += `\n`;
+            
+            // Project Scope
+            content += `## Project Scope\n\n`;
+            if (projectData.projectScope) {
+                content += projectData.projectScope + '\n\n';
+            } else {
+                content += `_No project scope defined. Use the RFP Wizard to extract scope from your RFP document._\n\n`;
+            }
+            
+            // Schedule Notes
+            if (projectData.scheduleNotes) {
+                content += `## Schedule Information\n\n`;
+                content += projectData.scheduleNotes + '\n\n';
+            }
+            
+            // Phases
+            content += `## Project Phases\n\n`;
+            projectData.phases.forEach((phase, i) => {
+                content += `${i + 1}. ${phase}\n`;
+            });
+            content += `\n`;
+            
+            // Deliverable Packages
+            content += `## Deliverable Packages\n\n`;
+            projectData.packages.forEach((pkg, i) => {
+                content += `${i + 1}. ${pkg}\n`;
+            });
+            content += `\n`;
+            
+            // Disciplines with Scope and Budget
+            content += `## Disciplines\n\n`;
+            projectData.disciplines.forEach(disc => {
+                const budget = projectData.budgets[disc] || 0;
+                const budgetPercent = totalBudget > 0 ? ((budget / totalBudget) * 100).toFixed(1) : 0;
+                
+                content += `### ${disc}\n\n`;
+                content += `**Budget:** $${formatNumber(budget)} (${budgetPercent}% of total)\n\n`;
+                
+                // Discipline scope
+                if (projectData.disciplineScopes && projectData.disciplineScopes[disc]) {
+                    content += `**Scope of Work:**\n`;
+                    content += projectData.disciplineScopes[disc] + '\n\n';
+                }
+                
+                // Package breakdown
+                content += `**Package Breakdown:**\n\n`;
+                content += `| Package | Claim % | Budget | Start | End |\n`;
+                content += `|---------|---------|--------|-------|-----|\n`;
+                
+                projectData.packages.forEach(pkg => {
+                    const key = `${disc}-${pkg}`;
+                    const claimPct = projectData.claiming[key] || 0;
+                    const pkgBudget = budget * (claimPct / 100);
+                    const dates = projectData.dates[key] || { start: '-', end: '-' };
+                    
+                    content += `| ${pkg} | ${claimPct}% | $${formatNumber(pkgBudget)} | ${dates.start || '-'} | ${dates.end || '-'} |\n`;
+                });
+                content += `\n`;
+            });
+            
+            // Budget Summary Table
+            content += `## Budget Summary\n\n`;
+            content += `| Discipline | Budget | % of Total |\n`;
+            content += `|------------|--------|------------|\n`;
+            
+            projectData.disciplines.forEach(disc => {
+                const budget = projectData.budgets[disc] || 0;
+                const pct = totalBudget > 0 ? ((budget / totalBudget) * 100).toFixed(1) : 0;
+                content += `| ${disc} | $${formatNumber(budget)} | ${pct}% |\n`;
+            });
+            content += `| **TOTAL** | **$${formatNumber(totalBudget)}** | **100%** |\n`;
+            content += `\n`;
+            
+            // Download file
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `project_summary_${new Date().toISOString().split('T')[0]}.md`;
             a.click();
         }
 
@@ -6785,6 +6915,18 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             const phasesStr = document.getElementById('rfp-preview-phases').value;
             const disciplinesStr = document.getElementById('rfp-preview-disciplines').value;
             const packagesStr = document.getElementById('rfp-preview-packages').value;
+            const scopeStr = document.getElementById('rfp-preview-scope').value;
+            const scheduleStr = document.getElementById('rfp-preview-schedule').value;
+            
+            // Get discipline scopes from textarea fields
+            const disciplineScopes = {};
+            document.querySelectorAll('.rfp-discipline-scope-textarea').forEach(textarea => {
+                const disc = textarea.getAttribute('data-discipline');
+                const scope = textarea.value.trim();
+                if (disc && scope) {
+                    disciplineScopes[disc] = scope;
+                }
+            });
             
             // Parse phases
             const phases = phasesStr.split(',').map(s => s.trim()).filter(s => s);
@@ -6799,6 +6941,11 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             projectData.phases = phases.length > 0 ? phases : ['Base'];
             projectData.disciplines = disciplines.length > 0 ? disciplines : [];
             projectData.packages = packages.length > 0 ? packages : ['Preliminary', 'Final'];
+            
+            // Store scope information
+            projectData.projectScope = scopeStr || '';
+            projectData.scheduleNotes = scheduleStr || '';
+            projectData.disciplineScopes = disciplineScopes;
             
             // Set all budgets to 0 - user will set via Cost Estimator in Step 4
             projectData.budgets = {};
@@ -6875,6 +7022,114 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             
             // Show success message
             alert(`RFP data imported successfully!\n\n• ${projectData.phases.length} phases\n• ${projectData.disciplines.length} disciplines\n• ${projectData.packages.length} packages\n\nReview and adjust the data in each step.`);
+        }
+
+        /**
+         * Exports the RFP extracted data to a formatted text/markdown file
+         */
+        function exportRfpData() {
+            // Get current values from preview fields
+            const phasesStr = document.getElementById('rfp-preview-phases').value;
+            const disciplinesStr = document.getElementById('rfp-preview-disciplines').value;
+            const packagesStr = document.getElementById('rfp-preview-packages').value;
+            const scopeStr = document.getElementById('rfp-preview-scope').value;
+            const scheduleStr = document.getElementById('rfp-preview-schedule').value;
+            
+            // Get discipline scopes from textarea fields
+            const disciplineScopes = {};
+            document.querySelectorAll('.rfp-discipline-scope-textarea').forEach(textarea => {
+                const disc = textarea.getAttribute('data-discipline');
+                const scope = textarea.value.trim();
+                if (disc && scope) {
+                    disciplineScopes[disc] = scope;
+                }
+            });
+            
+            // Get notes
+            const notesEl = document.getElementById('rfp-notes-text');
+            const notes = notesEl ? notesEl.textContent : '';
+            
+            // Build export content
+            const timestamp = new Date().toLocaleString();
+            let content = `# RFP Analysis Export\n`;
+            content += `Generated: ${timestamp}\n\n`;
+            
+            // Usage Stats
+            const stats = rfpState.usageStats;
+            if (stats && stats.totalTokens > 0) {
+                content += `## Analysis Statistics\n`;
+                content += `- API Calls: ${stats.apiCalls}\n`;
+                content += `- Model: ${stats.model || 'gpt-5.2'}\n`;
+                content += `- Total Tokens: ${formatNumber(stats.totalTokens)}\n`;
+                content += `- Processing Time: ${stats.endTime && stats.startTime ? ((stats.endTime - stats.startTime) / 1000).toFixed(1) + 's' : 'N/A'}\n`;
+                content += `- Estimated Cost: $${stats.estimatedCost.toFixed(4)}\n\n`;
+            }
+            
+            content += `---\n\n`;
+            
+            // Project Overview
+            content += `## Project Scope Summary\n\n`;
+            content += scopeStr || '_No scope summary extracted_';
+            content += `\n\n`;
+            
+            // Schedule
+            content += `## Schedule Information\n\n`;
+            content += scheduleStr || '_No schedule information extracted_';
+            content += `\n\n`;
+            
+            // Phases
+            content += `## Project Phases\n\n`;
+            const phases = phasesStr.split(',').map(s => s.trim()).filter(s => s);
+            if (phases.length > 0) {
+                phases.forEach(phase => {
+                    content += `- ${phase}\n`;
+                });
+            } else {
+                content += `_No phases extracted_\n`;
+            }
+            content += `\n`;
+            
+            // Packages/Deliverables
+            content += `## Deliverable Packages\n\n`;
+            const packages = packagesStr.split(',').map(s => s.trim()).filter(s => s);
+            if (packages.length > 0) {
+                packages.forEach(pkg => {
+                    content += `- ${pkg}\n`;
+                });
+            } else {
+                content += `_No packages extracted_\n`;
+            }
+            content += `\n`;
+            
+            // Disciplines with Scopes
+            content += `## Disciplines & Scope of Work\n\n`;
+            const disciplines = disciplinesStr.split(',').map(s => s.trim()).filter(s => s);
+            if (disciplines.length > 0) {
+                disciplines.forEach(disc => {
+                    content += `### ${disc}\n\n`;
+                    const scope = disciplineScopes[disc];
+                    if (scope) {
+                        content += `${scope}\n\n`;
+                    } else {
+                        content += `_No specific scope extracted_\n\n`;
+                    }
+                });
+            } else {
+                content += `_No disciplines extracted_\n`;
+            }
+            
+            // Notes
+            if (notes && notes !== 'Analysis notes will appear here...') {
+                content += `## AI Notes\n\n`;
+                content += notes + '\n\n';
+            }
+            
+            // Download file
+            const blob = new Blob([content], { type: 'text/markdown' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `rfp_analysis_${new Date().toISOString().split('T')[0]}.md`;
+            a.click();
         }
     </script>
 
@@ -7063,6 +7318,7 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
 
                         <div class="rfp-modal-actions">
                             <button class="rfp-btn" onclick="goToRfpStage(2)">← Re-analyze</button>
+                            <button class="rfp-btn" onclick="exportRfpData()">📥 Export</button>
                             <button class="rfp-btn rfp-btn-primary" onclick="applyRfpData()">Apply to Project ✓</button>
                         </div>
                     </div>
