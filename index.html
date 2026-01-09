@@ -176,6 +176,7 @@
                             <div class="mh-summary-bar">
                                 <div>
                                     <span class="total-label">TOTAL ESTIMATED MAN-HOURS</span>
+                                    <div id="mh-total-range" style="font-size: 11px; color: #4da6ff; margin-top: 4px; display: none;"></div>
                                 </div>
                                 <div class="total-mh" id="mh-total-display">0</div>
                             </div>
@@ -2748,6 +2749,7 @@
                     </td>
                     <td class="numeric">
                         <span class="mh-value" id="mh-value-${discId}">0</span>
+                        <div class="mh-range" id="mh-range-${discId}" style="font-size: 9px; color: #888; margin-top: 2px; display: none;"></div>
                     </td>
                     <td>
                         <span class="projects-used" id="mh-projects-${discId}" title="Click to expand">—</span>
@@ -2875,14 +2877,26 @@
             
             // Display MH with statistical range if available
             const mhValueEl = document.getElementById(`mh-value-${discId}`);
-            if (state.mhBounds && state.mhBounds.lower !== state.mhBounds.upper) {
-                // Show estimate with range tooltip
+            const mhRangeEl = document.getElementById(`mh-range-${discId}`);
+            
+            if (state.mhBounds && state.mhBounds.lower !== state.mhBounds.upper && state.mh > 0) {
+                // Show estimate with visible range below
                 mhValueEl.textContent = formatMH(state.mh);
-                mhValueEl.title = `Range: ${state.mhBounds.range} MH (avg ± std dev)`;
+                mhValueEl.title = `Best estimate based on avg rate`;
                 mhValueEl.style.cursor = 'help';
+                
+                // Show range directly in the UI
+                if (mhRangeEl) {
+                    mhRangeEl.style.display = 'block';
+                    mhRangeEl.innerHTML = `<span style="color: #4da6ff;">±</span> ${formatMH(state.mhBounds.lower)} - ${formatMH(state.mhBounds.upper)}`;
+                    mhRangeEl.title = 'Range based on avg ± std dev of historical project rates';
+                }
             } else {
                 mhValueEl.textContent = formatMH(state.mh);
                 mhValueEl.title = '';
+                if (mhRangeEl) {
+                    mhRangeEl.style.display = 'none';
+                }
             }
             
             // Show projects used with statistical info
@@ -3003,12 +3017,24 @@
             }
             
             const totalDisplayEl = document.getElementById('mh-total-display');
+            const totalRangeEl = document.getElementById('mh-total-range');
             totalDisplayEl.textContent = formatMH(total);
             
-            // Show range tooltip on total if statistical data is available
-            if (hasStatisticalData && totalLower !== totalUpper) {
-                totalDisplayEl.title = `Range: ${formatMH(totalLower)} - ${formatMH(totalUpper)} MH (avg ± std dev)`;
+            // Show range prominently if statistical data is available
+            if (hasStatisticalData && totalLower !== totalUpper && total > 0) {
+                totalDisplayEl.title = `Best estimate based on average rates`;
                 totalDisplayEl.style.cursor = 'help';
+                
+                // Show range in dedicated element (more visible)
+                if (totalRangeEl) {
+                    totalRangeEl.style.display = 'block';
+                    totalRangeEl.innerHTML = `📊 Confidence Range: <strong>${formatMH(totalLower)} - ${formatMH(totalUpper)}</strong> MH`;
+                    totalRangeEl.title = 'Based on avg ± std dev of historical project rates';
+                }
+            } else {
+                if (totalRangeEl) {
+                    totalRangeEl.style.display = 'none';
+                }
             }
             
             // Update status with range info
@@ -3535,9 +3561,20 @@
         }
 
         /**
-         * Returns to the previous wizard step
+         * Returns to the previous wizard step or from results to wizard
          */
         function prevStep() {
+            // Check if we're on the results page
+            const resultsVisible = !document.getElementById('results-section').classList.contains('hidden');
+            
+            if (resultsVisible) {
+                // Return from results to wizard (step 6)
+                editWBS();
+                currentStep = 6;
+                showStep(6);
+                return;
+            }
+            
             saveCurrentStep();
             if (currentStep > 1) {
                 currentStep--;
@@ -4413,8 +4450,13 @@
             updateKPIs();
             updateStatus('WBS GENERATED');
             
-            // Show the reports button
+            // Show the reports button and update back button for results page
             updateReportsButtonVisibility();
+            
+            // Show back button and hide next/generate buttons on results page
+            document.getElementById('prev-btn').classList.remove('hidden');
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('generate-btn').classList.add('hidden');
         }
 
         function updateKPIs() {
