@@ -2828,6 +2828,124 @@
             border-color: #ffd700;
         }
 
+        /* RFP Quantities Section */
+        .rfp-quantities-section {
+            background: linear-gradient(135deg, #0a1a2a 0%, #0a1a1a 100%);
+            border: 1px solid #1a4a6a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+
+        .rfp-quantities-section h4 {
+            color: #4da6ff;
+            font-size: 14px;
+            margin: 0 0 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .rfp-quantities-desc {
+            color: #888;
+            font-size: 11px;
+            margin: 0 0 16px 0;
+        }
+
+        .rfp-quantities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .rfp-quantity-item {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .rfp-quantity-item.has-value {
+            border-color: #4da6ff;
+            background: #0a1520;
+        }
+
+        .rfp-quantity-item label {
+            display: block;
+            color: #888;
+            font-size: 10px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .rfp-quantity-item input {
+            width: 100%;
+            background: #000;
+            border: 1px solid #444;
+            color: #4da6ff;
+            padding: 6px 8px;
+            font-size: 13px;
+            font-family: inherit;
+            border-radius: 4px;
+        }
+
+        .rfp-quantity-item input:focus {
+            outline: none;
+            border-color: #4da6ff;
+        }
+
+        .rfp-quantity-item .qty-unit {
+            color: #666;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        .rfp-quantities-project-info {
+            border-top: 1px solid #1a4a6a;
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+
+        .rfp-project-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .rfp-project-info-item {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .rfp-project-info-item label {
+            display: block;
+            color: #888;
+            font-size: 10px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+
+        .rfp-project-info-item input,
+        .rfp-project-info-item select {
+            width: 100%;
+            background: #000;
+            border: 1px solid #444;
+            color: #ffd700;
+            padding: 6px 8px;
+            font-size: 13px;
+            font-family: inherit;
+            border-radius: 4px;
+        }
+
+        .rfp-project-info-item input:focus,
+        .rfp-project-info-item select:focus {
+            outline: none;
+            border-color: #ffd700;
+        }
+
         .rfp-notes {
             background: #1a1a00;
             border: 1px solid #444;
@@ -5696,6 +5814,10 @@
          */
         function updateMHRowDisplay(discId, state) {
             const row = document.getElementById(`mh-row-${discId}`);
+            if (!row) {
+                console.warn(`updateMHRowDisplay: Row not found for discipline ${discId}`);
+                return;
+            }
             const toggle = row.querySelector('.discipline-toggle');
             const qtyInput = document.getElementById(`mh-qty-${discId}`);
             const config = DISCIPLINE_CONFIG[discId];
@@ -12193,7 +12315,7 @@ Return ONLY the JSON, no markdown formatting.`;
          * Analyzes a single text chunk with OpenAI
          */
         async function analyzeChunk(apiKey, chunkText, chunkIndex, totalChunks) {
-            const systemPrompt = `Extract WBS info, RISKS, and QUANTITY ESTIMATES from engineering RFP chunk ${chunkIndex + 1}/${totalChunks}. Return raw JSON only:
+            const systemPrompt = `You are an expert transportation infrastructure cost estimator. Extract WBS info and ESTIMATE QUANTITIES from this engineering RFP chunk ${chunkIndex + 1}/${totalChunks}. Return raw JSON only:
 {"phases":[],"disciplines":[],"disciplineScopes":{},"packages":[],"budgets":{},"scope":"","schedule":"","risks":[],"quantities":{},"projectInfo":{},"confidence":{"phases":"high/medium/low","disciplines":"high/medium/low","packages":"high/medium/low","budgets":"low","scope":"high/medium/low","schedule":"high/medium/low","quantities":"high/medium/low"},"notes":""}
 
 **PHASES**: Project stages (e.g. Base Design, ESDC, TSCD, Preliminary, Final, As-Builts, Closeout, Phase 1/2/3)
@@ -12203,20 +12325,29 @@ Return ONLY the JSON, no markdown formatting.`;
 **SCOPE**: Project location, type, major work elements, requirements
 **SCHEDULE**: Timeline info, durations, milestones, deadlines. Extract design duration in months if mentioned.
 **RISKS**: Array of risk objects: [{"category":"Schedule|Budget|Technical|Scope|Coordination","severity":"High|Medium|Low","description":"specific risk","mitigation":"suggested mitigation"}]
-**QUANTITIES**: Estimate key quantities for MH estimation. Extract or estimate:
-- roadwayLengthLF: Roadway alignment length in linear feet
-- projectAreaAC: Total project area in acres
-- wallAreaSF: Retaining wall area in square feet (height x length)
-- noiseWallAreaSF: Noise wall area in square feet
-- bridgeDeckAreaSF: Bridge deck area in square feet (count x avg deck area)
-- bridgeCount: Number of bridges
-- structureCount: Total transportation structures (bridges, walls, culverts)
-- utilityRelocations: Count of utility relocations
-- permitCount: Environmental/other permit count
-- trackLengthTF: Track alignment in track feet (if transit)
-**PROJECT INFO**: {"projectCostM": estimated cost in millions, "designDurationMonths": duration, "projectType": "highway|transit|bridge|utility", "complexity": "Low|Medium|High"}
-- Look for: tight deadlines, complex requirements, undefined scope, multi-agency coordination, environmental constraints, utility conflicts, ROW issues, phased construction, regulatory requirements
-Confidence: "high"=explicit, "medium"=inferred, "low"=guessed/estimated`;
+
+**QUANTITIES - CRITICAL**: You MUST estimate quantities even if not explicitly stated. Use engineering judgment:
+- roadwayLengthLF: Convert miles to LF (1 mile=5280 LF). Estimate from project limits/corridor. Min 1000 LF for any roadway project.
+- projectAreaAC: Estimate as roadwayLengthLF × 150ft ROW ÷ 43560. Typical: 0.5-5 AC per 1000 LF.
+- wallAreaSF: If retaining walls/grade separations mentioned, estimate height(8-20ft) × length.
+- noiseWallAreaSF: If noise walls mentioned or residential areas, estimate 15ft height × length.
+- bridgeDeckAreaSF: Per bridge: width(40-80ft) × length(100-500ft). Typical bridge = 4,000-20,000 SF.
+- bridgeCount: Count bridges, overpasses, underpasses, grade separations.
+- structureCount: Sum of bridges + major culverts + walls + other structures.
+- utilityRelocations: Estimate 5-20 urban, 2-10 rural. More if utility conflicts mentioned.
+- permitCount: Estimate 3-10 based on environmental mentions, water crossings, wetlands.
+- trackLengthTF: For transit, convert miles to track feet. Double-track = 2× length.
+
+**PROJECT INFO - REQUIRED**: You MUST provide estimates:
+- projectCostM: Estimate construction cost in $millions using these benchmarks:
+  * Resurfacing: $1-5M/mile | Urban arterial: $10-30M/mile | Highway widening: $20-50M/mile
+  * Interchange: $30-100M each | Bridge: $500-2000/SF deck | Light rail: $100-250M/mile
+- designDurationMonths: Based on size/complexity (12-48 months typical). Small=12-18, Medium=18-30, Large=30-48.
+- projectType: "highway"|"transit"|"bridge"|"utility"
+- complexity: "Low"|"Medium"|"High" based on urban/rural, coordination, environmental constraints
+
+IMPORTANT: NEVER return 0 for quantities if that discipline applies to the project. Always make your best engineering estimate.
+Confidence: "high"=explicit in RFP, "medium"=inferred from context, "low"=estimated from project type`;
 
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
@@ -12228,7 +12359,7 @@ Confidence: "high"=explicit, "medium"=inferred, "low"=guessed/estimated`;
                     model: 'gpt-5.2',
                     messages: [
                         { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `Analyze this portion of the RFP document (chunk ${chunkIndex + 1} of ${totalChunks}) and extract WBS information:\n\n${chunkText}` }
+                        { role: 'user', content: `Analyze this RFP document (chunk ${chunkIndex + 1} of ${totalChunks}). Extract WBS information AND estimate all quantities and project costs based on the scope described. Even if quantities aren't explicitly stated, use your engineering expertise to provide reasonable estimates for man-hour estimation purposes:\n\n${chunkText}` }
                     ],
                     max_completion_tokens: 32000,
                     temperature: 0.3
@@ -12438,13 +12569,13 @@ Confidence: "high"=explicit, "medium"=inferred, "low"=guessed/estimated`;
             });
             
             const mergePrompt = `Merge ${chunkResults.length} WBS chunk analyses (complex fields only). Return raw JSON:
-{"disciplineScopes":{},"scope":"","schedule":"","confidence":{"phases":"high/medium/low","disciplines":"high/medium/low","packages":"high/medium/low","budgets":"low","scope":"high/medium/low","schedule":"high/medium/low"},"notes":""}
+{"disciplineScopes":{},"scope":"","schedule":"","confidence":{"phases":"high/medium/low","disciplines":"high/medium/low","packages":"high/medium/low","budgets":"low","scope":"high/medium/low","schedule":"high/medium/low","quantities":"high/medium/low"},"notes":""}
 
 Merge rules:
 - disciplineScopes: Combine scope descriptions per discipline from all chunks
 - scope: Comprehensive project summary combining all chunks
 - schedule: Combined timeline info from all chunks
-- confidence: Use highest confidence level found across chunks (high > medium > low)
+- confidence: Use highest confidence level found across chunks (high > medium > low). Confidence for quantities should reflect how explicitly quantities were stated in the RFP.
 - notes: Combine all notes
 
 Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
@@ -12533,6 +12664,8 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                     packages: localMerged.packages,
                     budgets: localMerged.budgets,
                     risks: localMerged.risks || [],
+                    quantities: localMerged.quantities || {},
+                    projectInfo: localMerged.projectInfo || {},
                     disciplineScopes: aiMerged.disciplineScopes || {},
                     scope: aiMerged.scope || '',
                     schedule: aiMerged.schedule || '',
@@ -12793,6 +12926,9 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                     (rfpState.usageStats.totalCompletionTokens / 1000000 * outputCostPer1M);
                 
                 console.log('Final usage stats:', rfpState.usageStats);
+                console.log('Extracted data before storing:', extracted);
+                console.log('Extracted quantities:', extracted?.quantities);
+                console.log('Extracted projectInfo:', extracted?.projectInfo);
                 
                 rfpState.extractedData = extracted;
                 displayRfpPreview(extracted);
@@ -12871,6 +13007,10 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             setConfidenceIndicator('rfp-conf-packages', conf.packages);
             setConfidenceIndicator('rfp-conf-scope', conf.scope);
             setConfidenceIndicator('rfp-conf-schedule', conf.schedule);
+            setConfidenceIndicator('rfp-conf-quantities', conf.quantities);
+            
+            // Quantities Section
+            displayRfpQuantities(data.quantities, data.projectInfo, conf.quantities);
             
             // Chunking notice (if document was chunked)
             if (rfpState.chunkCount > 1) {
@@ -12934,6 +13074,105 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                 document.getElementById('rfp-stats-cost').textContent = `$${stats.estimatedCost.toFixed(4)}`;
             } else {
                 document.getElementById('rfp-usage-stats').style.display = 'none';
+            }
+        }
+
+        /**
+         * Display extracted quantities in the RFP preview
+         */
+        function displayRfpQuantities(quantities, projectInfo, confidenceLevel) {
+            console.log('displayRfpQuantities called with:', { quantities, projectInfo, confidenceLevel });
+            
+            const section = document.getElementById('rfp-quantities-section');
+            const grid = document.getElementById('rfp-quantities-grid');
+            
+            if (!section || !grid) {
+                console.error('displayRfpQuantities: Section or grid element not found');
+                return;
+            }
+            
+            // Quantity field definitions with labels and units
+            const quantityFields = [
+                { key: 'roadwayLengthLF', label: 'Roadway Length', unit: 'LF' },
+                { key: 'projectAreaAC', label: 'Project Area', unit: 'AC' },
+                { key: 'wallAreaSF', label: 'Retaining Wall Area', unit: 'SF' },
+                { key: 'noiseWallAreaSF', label: 'Noise Wall Area', unit: 'SF' },
+                { key: 'bridgeDeckAreaSF', label: 'Bridge Deck Area', unit: 'SF' },
+                { key: 'bridgeCount', label: 'Bridge Count', unit: 'EA' },
+                { key: 'structureCount', label: 'Structure Count', unit: 'EA' },
+                { key: 'utilityRelocations', label: 'Utility Relocations', unit: 'EA' },
+                { key: 'permitCount', label: 'Permit Count', unit: 'EA' },
+                { key: 'trackLengthTF', label: 'Track Length', unit: 'TF' }
+            ];
+            
+            const qty = quantities || {};
+            const info = projectInfo || {};
+            
+            // Check if any quantities were extracted
+            const hasQuantities = Object.values(qty).some(v => v > 0);
+            const hasProjectInfo = info.projectCostM > 0 || (info.designDurationMonths && info.designDurationMonths !== 20);
+            
+            // Always show the section so users can enter quantities manually
+            // Visual indicator shows whether AI extracted values or not
+            section.style.display = 'block';
+            
+            // Update section header to indicate if quantities were found
+            const sectionHeader = section.querySelector('h4');
+            if (sectionHeader) {
+                if (hasQuantities || hasProjectInfo) {
+                    sectionHeader.innerHTML = '📐 Quantity Estimates for MH Benchmark <span id="rfp-conf-quantities" class="rfp-confidence medium">MED</span>';
+                } else {
+                    sectionHeader.innerHTML = '📐 Quantity Estimates <span style="color: #ff8800; font-size: 10px; margin-left: 8px;">(No quantities found - enter manually)</span>';
+                }
+            }
+            
+            // Build quantity inputs
+            grid.innerHTML = quantityFields.map(field => {
+                const value = qty[field.key] || 0;
+                const hasValue = value > 0;
+                return `
+                    <div class="rfp-quantity-item ${hasValue ? 'has-value' : ''}">
+                        <label>${field.label}</label>
+                        <input type="text" id="rfp-qty-${field.key}" 
+                               value="${hasValue ? formatNumber(value) : '0'}" 
+                               inputmode="numeric"
+                               onchange="updateRfpQuantity('${field.key}', this.value)">
+                        <div class="qty-unit">${field.unit}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Populate project info fields
+            if (info.projectCostM > 0) {
+                document.getElementById('rfp-qty-projectCostM').value = info.projectCostM.toFixed(1);
+            }
+            if (info.designDurationMonths) {
+                document.getElementById('rfp-qty-designDurationMonths').value = info.designDurationMonths;
+            }
+            if (info.projectType) {
+                document.getElementById('rfp-qty-projectType').value = info.projectType;
+            }
+            if (info.complexity) {
+                document.getElementById('rfp-qty-complexity').value = info.complexity;
+            }
+        }
+
+        /**
+         * Update a quantity value in rfpState
+         */
+        function updateRfpQuantity(key, value) {
+            const numValue = parseFloat(value.replace(/[,$]/g, '')) || 0;
+            if (!rfpState.extractedData) rfpState.extractedData = {};
+            if (!rfpState.extractedData.quantities) rfpState.extractedData.quantities = {};
+            rfpState.extractedData.quantities[key] = numValue;
+            
+            // Update display with formatting
+            const input = document.getElementById(`rfp-qty-${key}`);
+            if (input && numValue > 0) {
+                input.value = formatNumber(numValue);
+                input.closest('.rfp-quantity-item').classList.add('has-value');
+            } else if (input) {
+                input.closest('.rfp-quantity-item').classList.remove('has-value');
             }
         }
 
@@ -13075,26 +13314,86 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             if (rfpState.quantities) {
                 const qtyCount = Object.values(rfpState.quantities).filter(v => v > 0).length;
                 if (qtyCount > 0) {
-                    quantityInfo = `\n• ${qtyCount} quantity estimates extracted`;
+                    quantityInfo = `\n• ${qtyCount} quantity estimates applied to MH Estimator`;
                 }
             }
             
+            // Get confidence level for user feedback
+            const confidenceLevel = rfpState.extractedData?.confidence?.quantities || 'low';
+            const confidenceMsg = {
+                'high': 'Quantities are based on explicit RFP values.',
+                'medium': 'Quantities are estimated from RFP context. Review recommended.',
+                'low': 'Quantities are rough estimates. Manual adjustment recommended.'
+            }[confidenceLevel] || 'Manual adjustment recommended.';
+            
             // Show success message
-            alert(`RFP data imported successfully!\n\n• ${projectData.phases.length} phases\n• ${projectData.disciplines.length} disciplines\n• ${projectData.packages.length} packages${quantityInfo}\n\nReview and adjust the data in each step.\nCheck the MH Benchmark Estimator in Step 4 for quantity estimates.`);
+            alert(`RFP data imported successfully!\n\n• ${projectData.phases.length} phases\n• ${projectData.disciplines.length} disciplines\n• ${projectData.packages.length} packages${quantityInfo}\n\n${confidenceMsg}\n\nCheck the MH Benchmark Estimator in Step 4 to review quantities.`);
+        }
+
+        /**
+         * Read quantity values from RFP preview input fields
+         */
+        function readRfpQuantityFields() {
+            const quantityKeys = [
+                'roadwayLengthLF', 'projectAreaAC', 'wallAreaSF', 'noiseWallAreaSF',
+                'bridgeDeckAreaSF', 'bridgeCount', 'structureCount', 'utilityRelocations',
+                'permitCount', 'trackLengthTF'
+            ];
+            
+            const quantities = {};
+            quantityKeys.forEach(key => {
+                const input = document.getElementById(`rfp-qty-${key}`);
+                if (input) {
+                    quantities[key] = parseFloat(input.value.replace(/[,$]/g, '')) || 0;
+                } else {
+                    // Fall back to extracted data
+                    quantities[key] = rfpState.extractedData?.quantities?.[key] || 0;
+                }
+            });
+            
+            return quantities;
+        }
+
+        /**
+         * Read project info values from RFP preview input fields
+         */
+        function readRfpProjectInfoFields() {
+            const costInput = document.getElementById('rfp-qty-projectCostM');
+            const durationInput = document.getElementById('rfp-qty-designDurationMonths');
+            const typeInput = document.getElementById('rfp-qty-projectType');
+            const complexityInput = document.getElementById('rfp-qty-complexity');
+            
+            return {
+                projectCostM: costInput ? parseFloat(costInput.value) || 0 : (rfpState.extractedData?.projectInfo?.projectCostM || 0),
+                designDurationMonths: durationInput ? parseInt(durationInput.value) || 20 : (rfpState.extractedData?.projectInfo?.designDurationMonths || 20),
+                projectType: typeInput ? typeInput.value : (rfpState.extractedData?.projectInfo?.projectType || 'highway'),
+                complexity: complexityInput ? complexityInput.value : (rfpState.extractedData?.projectInfo?.complexity || 'Medium')
+            };
         }
 
         /**
          * Apply RFP-extracted quantities to the MH Estimator
          */
         function applyRfpQuantitiesToEstimator() {
-            if (!rfpState.extractedData) return;
+            if (!rfpState.extractedData) {
+                console.log('applyRfpQuantitiesToEstimator: No extractedData found');
+                return;
+            }
             
-            const quantities = rfpState.extractedData.quantities || rfpState.quantities || {};
-            const projectInfo = rfpState.extractedData.projectInfo || rfpState.projectInfo || {};
+            console.log('applyRfpQuantitiesToEstimator: Starting with extractedData:', rfpState.extractedData);
+            
+            // Read user-edited values from the RFP preview fields
+            const quantities = readRfpQuantityFields();
+            const projectInfo = readRfpProjectInfoFields();
+            
+            console.log('applyRfpQuantitiesToEstimator: Read quantities from fields:', quantities);
+            console.log('applyRfpQuantitiesToEstimator: Read projectInfo from fields:', projectInfo);
             
             // Store in rfpState for reference
             rfpState.quantities = quantities;
             rfpState.projectInfo = projectInfo;
+            rfpState.extractedData.quantities = quantities;
+            rfpState.extractedData.projectInfo = projectInfo;
             
             // Apply project cost
             if (projectInfo.projectCostM && projectInfo.projectCostM > 0) {
@@ -13155,9 +13454,16 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                 'environmental': quantities.permitCount || 0
             };
             
+            console.log('applyRfpQuantitiesToEstimator: quantityMapping:', quantityMapping);
+            
+            // Count how many disciplines will be updated
+            let updatedCount = 0;
+            
             // Apply quantities to each discipline
             for (const [discId, qty] of Object.entries(quantityMapping)) {
+                console.log(`Checking discipline ${discId}: qty=${qty}, exists=${!!mhEstimateState.disciplines[discId]}`);
                 if (qty > 0 && mhEstimateState.disciplines[discId]) {
+                    updatedCount++;
                     const state = mhEstimateState.disciplines[discId];
                     state.active = true;
                     state.quantity = qty;
@@ -13181,6 +13487,14 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             recalculateTotalMH();
             
             console.log('Applied RFP quantities to MH Estimator:', quantityMapping);
+            console.log(`Updated ${updatedCount} disciplines in MH Estimator`);
+            
+            // Update status to show quantities were applied
+            const statusEl = document.getElementById('mh-estimator-status');
+            if (statusEl && updatedCount > 0) {
+                statusEl.textContent = `${updatedCount} disciplines populated from RFP`;
+                statusEl.style.color = '#4da6ff';
+            }
         }
 
         /**
@@ -13631,6 +13945,44 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                             <div class="rfp-preview-card full-width">
                                 <h4>Schedule Notes <span id="rfp-conf-schedule" class="rfp-confidence medium">MED</span></h4>
                                 <textarea id="rfp-preview-schedule" placeholder="Schedule information extracted from RFP..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Quantity Estimates Section -->
+                        <div id="rfp-quantities-section" class="rfp-quantities-section" style="display: none;">
+                            <h4>📐 Quantity Estimates for MH Benchmark <span id="rfp-conf-quantities" class="rfp-confidence medium">MED</span></h4>
+                            <p class="rfp-quantities-desc">AI-estimated quantities from RFP. Review and adjust values before applying.</p>
+                            <div class="rfp-quantities-grid" id="rfp-quantities-grid">
+                                <!-- Populated by JS -->
+                            </div>
+                            <div class="rfp-quantities-project-info" id="rfp-project-info-section">
+                                <div class="rfp-project-info-grid">
+                                    <div class="rfp-project-info-item">
+                                        <label>Est. Project Cost ($M)</label>
+                                        <input type="text" id="rfp-qty-projectCostM" value="0" />
+                                    </div>
+                                    <div class="rfp-project-info-item">
+                                        <label>Design Duration (Months)</label>
+                                        <input type="number" id="rfp-qty-designDurationMonths" value="20" min="6" max="60" />
+                                    </div>
+                                    <div class="rfp-project-info-item">
+                                        <label>Project Type</label>
+                                        <select id="rfp-qty-projectType">
+                                            <option value="highway">Highway/Interstate</option>
+                                            <option value="transit">Transit/Rail</option>
+                                            <option value="bridge">Bridge</option>
+                                            <option value="utility">Utility</option>
+                                        </select>
+                                    </div>
+                                    <div class="rfp-project-info-item">
+                                        <label>Complexity</label>
+                                        <select id="rfp-qty-complexity">
+                                            <option value="Low">Low</option>
+                                            <option value="Medium" selected>Medium</option>
+                                            <option value="High">High</option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
