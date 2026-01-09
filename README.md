@@ -98,14 +98,17 @@ Estimates man-hours based on historical project data:
 
 ## Tech Stack
 
-- **Vite** - Modern build tool with HMR
-- **HTML5** - Semantic markup
-- **CSS3** - Modular architecture with PostCSS, autoprefixer, and cssnano
-- **ES Modules** - Modern JavaScript with proper imports/exports
-- **Chart.js** - Data visualization (npm package)
-- **PDF.js** - PDF parsing for RFP import (npm package)
-- **html2pdf.js** - PDF export (npm package)
-- **OpenAI API** - AI features (user-provided key)
+| Category | Technology |
+|----------|------------|
+| **Build Tool** | Vite 5.x with HMR |
+| **Frontend** | HTML5, CSS3, Vanilla JavaScript (ES Modules) |
+| **CSS Processing** | PostCSS, Autoprefixer, cssnano |
+| **Charts** | Chart.js 4.x (npm) |
+| **PDF Parsing** | PDF.js 3.11.174 (npm + CDN worker) |
+| **PDF Export** | html2pdf.js (npm) |
+| **AI Integration** | OpenAI API (user-provided key) |
+| **CI/CD** | GitHub Actions |
+| **Hosting** | GitHub Pages |
 
 ---
 
@@ -113,29 +116,54 @@ Estimates man-hours based on historical project data:
 
 ```
 IPC-Builder/
-├── index.html                    # Main HTML template
+├── index.html                    # Main HTML entry point
 ├── package.json                  # Dependencies and scripts
-├── vite.config.js               # Vite configuration
-├── postcss.config.js            # PostCSS configuration
+├── vite.config.js                # Vite configuration
+├── postcss.config.js             # PostCSS configuration
+├── .eslintrc.json                # ESLint configuration
+├── .prettierrc.json              # Prettier configuration
+├── CLAUDE.md                     # AI assistant context
+├── README.md                     # This file
+│
 ├── src/
-│   ├── main.js                  # Entry point
+│   ├── main.js                   # Application entry point
+│   ├── App.js                    # Main app controller
+│   ├── core/                     # Core modules
+│   │   ├── constants.js          # Application constants
+│   │   └── state.js              # Global state management
+│   ├── utils/                    # Utility functions
+│   │   ├── format.js             # Formatting helpers
+│   │   └── dom.js                # DOM manipulation
+│   ├── services/                 # External services
+│   │   ├── api/openai.js         # OpenAI integration
+│   │   ├── storage/localStorage.js
+│   │   └── export/               # CSV, URL exports
 │   ├── legacy/
-│   │   └── app-legacy.js        # Extracted JavaScript (to be modularized)
-│   └── styles/                  # Modular CSS architecture
-│       ├── main.css             # CSS entry point
-│       ├── base/                # Foundation (variables, reset, typography)
-│       ├── components/          # Reusable UI (buttons, cards, modals, tables)
-│       ├── features/            # Feature styles (calculator, chat, gantt, etc.)
-│       └── layout/              # Page layout (terminal, progress, responsive)
+│   │   └── app-legacy.js         # Legacy code (being modularized)
+│   └── styles/                   # Modular CSS architecture
+│       ├── main.css              # CSS entry point
+│       ├── base/                 # Variables, reset, typography
+│       ├── components/           # Buttons, cards, modals, tables
+│       ├── features/             # Calculator, chat, gantt, etc.
+│       └── layout/               # Terminal, progress, responsive
+│
 ├── public/
 │   └── data/
-│       └── benchmarking/        # Historical project data (14 JSON files)
+│       └── benchmarking/         # Historical project data (14 JSON files)
+│
 ├── docs/
-│   ├── CLAUDE.md                # Developer documentation
-│   ├── CODE_REVIEW_ANALYSIS.md  # Code quality review
-│   ├── REORGANIZATION_PLAN.md   # Architecture improvement plan
-│   └── VITE_MIGRATION_PLAN.md   # Vite migration documentation
-└── README.md
+│   ├── README.md                 # Documentation index
+│   ├── CODE_REVIEW_ANALYSIS.md   # Code quality review
+│   ├── REORGANIZATION_PLAN.md    # Architecture improvement plan
+│   ├── VITE_MIGRATION_PLAN.md    # Vite migration documentation
+│   └── reference/                # Backup/historical files
+│
+├── .github/
+│   └── workflows/
+│       ├── ci.yml                # Continuous integration
+│       └── deploy.yml            # GitHub Pages deployment
+│
+└── dist/                         # Production build output
 ```
 
 ---
@@ -183,16 +211,10 @@ npm run preview
 | `npm run dev` | Start development server with HMR |
 | `npm run build` | Create production build in `dist/` |
 | `npm run preview` | Preview production build locally |
-| `npm run build:analyze` | Build with bundle analysis |
-
----
-
-## Legacy Mode (No Build Required)
-
-If you prefer to run without Node.js:
-
-1. Use `index-original.html` (the pre-migration version)
-2. Open directly in browser or serve with `python3 -m http.server 8000`
+| `npm run build:analyze` | Build with bundle size analysis |
+| `npm run lint` | Run ESLint |
+| `npm run lint:fix` | Fix ESLint issues automatically |
+| `npm run format` | Format code with Prettier |
 
 ---
 
@@ -209,7 +231,7 @@ Terminal/console dark theme with gold accents:
 | Success | `#00ff00` |
 | Error | `#ff4444` |
 
-Font: JetBrains Mono (monospace)
+**Font:** JetBrains Mono (monospace)
 
 ---
 
@@ -226,14 +248,32 @@ Each file includes production rates (MH per unit) from real infrastructure proje
 
 ---
 
+## CI/CD Pipeline
+
+The project uses GitHub Actions for automated workflows:
+
+### Continuous Integration (`ci.yml`)
+- Runs on every push and pull request
+- Lints code with ESLint
+- Builds production bundle
+- Validates build success
+
+### Deployment (`deploy.yml`)
+- Triggers on push to `main` branch
+- Builds production bundle
+- Deploys to GitHub Pages
+
+---
+
 ## Documentation
 
 | File | Description |
 |------|-------------|
-| `docs/CLAUDE.md` | Comprehensive developer guide (~730 lines) |
+| `CLAUDE.md` | Comprehensive AI assistant context and developer guide |
 | `docs/CODE_REVIEW_ANALYSIS.md` | Code quality audit with improvement recommendations |
 | `docs/REORGANIZATION_PLAN.md` | Modularization roadmap |
 | `docs/VITE_MIGRATION_PLAN.md` | Vite migration documentation |
+| `docs/reference/` | Historical/backup files |
 
 ---
 
@@ -260,4 +300,4 @@ MIT
 
 ## Contributing
 
-Contributions welcome! Please see `docs/CLAUDE.md` for development guidelines and `docs/CODE_REVIEW_ANALYSIS.md` for known issues.
+Contributions welcome! Please see `CLAUDE.md` for development guidelines and `docs/CODE_REVIEW_ANALYSIS.md` for known issues.
