@@ -1,6 +1,6 @@
-# IPC-Builder (WBS Terminal v1.0)
+# IPC-Builder (WBS Terminal v2.0)
 
-**A zero-build, single-page web application for generating Work Breakdown Structures (WBS) for engineering infrastructure projects.**
+**A modern Vite-powered web application for generating Work Breakdown Structures (WBS) for engineering infrastructure projects.**
 
 🌐 **Live App:** https://mjamiv.github.io/IPC-Builder/
 
@@ -98,12 +98,13 @@ Estimates man-hours based on historical project data:
 
 ## Tech Stack
 
-- **HTML5** - Single-file application
-- **CSS3** - Modular architecture with CSS variables
-- **Vanilla JavaScript** - No frameworks required
-- **Chart.js** - Data visualization
-- **PDF.js** - PDF parsing for RFP import
-- **html2pdf.js** - PDF export
+- **Vite** - Modern build tool with HMR
+- **HTML5** - Semantic markup
+- **CSS3** - Modular architecture with PostCSS, autoprefixer, and cssnano
+- **ES Modules** - Modern JavaScript with proper imports/exports
+- **Chart.js** - Data visualization (npm package)
+- **PDF.js** - PDF parsing for RFP import (npm package)
+- **html2pdf.js** - PDF export (npm package)
 - **OpenAI API** - AI features (user-provided key)
 
 ---
@@ -112,42 +113,86 @@ Estimates man-hours based on historical project data:
 
 ```
 IPC-Builder/
-├── index.html                    # Main application
-├── css/                          # Modular CSS architecture
-│   ├── main.css                  # Entry point
-│   ├── base/                     # Foundation (variables, reset, typography)
-│   ├── components/               # Reusable UI (buttons, cards, modals, tables)
-│   ├── features/                 # Feature styles (calculator, chat, gantt, etc.)
-│   └── layout/                   # Page layout (terminal, progress, responsive)
-├── benchmarking/                 # Historical project data (14 JSON files)
-├── CLAUDE.md                     # Developer documentation
-├── CODE_REVIEW_ANALYSIS.md       # Code quality review
-└── REORGANIZATION_PLAN.md        # Architecture improvement plan
+├── index.html                    # Main HTML template
+├── package.json                  # Dependencies and scripts
+├── vite.config.js               # Vite configuration
+├── postcss.config.js            # PostCSS configuration
+├── src/
+│   ├── main.js                  # Entry point
+│   ├── legacy/
+│   │   └── app-legacy.js        # Extracted JavaScript (to be modularized)
+│   └── styles/                  # Modular CSS architecture
+│       ├── main.css             # CSS entry point
+│       ├── base/                # Foundation (variables, reset, typography)
+│       ├── components/          # Reusable UI (buttons, cards, modals, tables)
+│       ├── features/            # Feature styles (calculator, chat, gantt, etc.)
+│       └── layout/              # Page layout (terminal, progress, responsive)
+├── public/
+│   └── data/
+│       └── benchmarking/        # Historical project data (14 JSON files)
+├── docs/
+│   ├── CLAUDE.md                # Developer documentation
+│   ├── CODE_REVIEW_ANALYSIS.md  # Code quality review
+│   ├── REORGANIZATION_PLAN.md   # Architecture improvement plan
+│   └── VITE_MIGRATION_PLAN.md   # Vite migration documentation
+└── README.md
 ```
 
 ---
 
 ## Getting Started
 
-### Option 1: Use the Live App
-Visit https://mjamiv.github.io/IPC-Builder/
+### Prerequisites
 
-### Option 2: Run Locally
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **npm 9+** (included with Node.js)
 
-No build step required:
+### Installation
 
 ```bash
 # Clone the repository
 git clone https://github.com/mjamiv/IPC-Builder.git
 cd IPC-Builder
 
-# Open directly in browser
-open index.html
-
-# Or serve via local server
-python3 -m http.server 8000
-# Navigate to http://localhost:8000
+# Install dependencies
+npm install
 ```
+
+### Development
+
+```bash
+# Start dev server with hot reload
+npm run dev
+# → Opens http://localhost:3000
+```
+
+### Production Build
+
+```bash
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+### All Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start development server with HMR |
+| `npm run build` | Create production build in `dist/` |
+| `npm run preview` | Preview production build locally |
+| `npm run build:analyze` | Build with bundle analysis |
+
+---
+
+## Legacy Mode (No Build Required)
+
+If you prefer to run without Node.js:
+
+1. Use `index-original.html` (the pre-migration version)
+2. Open directly in browser or serve with `python3 -m http.server 8000`
 
 ---
 
@@ -170,7 +215,7 @@ Font: JetBrains Mono (monospace)
 
 ## Benchmarking Data
 
-The `benchmarking/` folder contains historical project data for man-hour estimation across 14 disciplines:
+The `public/data/benchmarking/` folder contains historical project data for man-hour estimation across 14 disciplines:
 
 - Bridges, Drainage, Roadway, Track
 - Traffic, Utilities, Geotechnical
@@ -185,9 +230,10 @@ Each file includes production rates (MH per unit) from real infrastructure proje
 
 | File | Description |
 |------|-------------|
-| `CLAUDE.md` | Comprehensive developer guide (~730 lines) |
-| `CODE_REVIEW_ANALYSIS.md` | Code quality audit with improvement recommendations |
-| `REORGANIZATION_PLAN.md` | Modularization roadmap |
+| `docs/CLAUDE.md` | Comprehensive developer guide (~730 lines) |
+| `docs/CODE_REVIEW_ANALYSIS.md` | Code quality audit with improvement recommendations |
+| `docs/REORGANIZATION_PLAN.md` | Modularization roadmap |
+| `docs/VITE_MIGRATION_PLAN.md` | Vite migration documentation |
 
 ---
 
@@ -214,4 +260,4 @@ MIT
 
 ## Contributing
 
-Contributions welcome! Please see `CLAUDE.md` for development guidelines and `CODE_REVIEW_ANALYSIS.md` for known issues.
+Contributions welcome! Please see `docs/CLAUDE.md` for development guidelines and `docs/CODE_REVIEW_ANALYSIS.md` for known issues.
