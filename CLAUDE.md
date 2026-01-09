@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with the IPC Builder (WB
 
 ## Project Overview
 
-**WBS Terminal v1.0** is a zero-build, single-page web application for generating Work Breakdown Structures (WBS) for engineering projects. It provides a terminal-themed interface for project planning, budgeting, and schedule management.
+**WBS Terminal v1.0** is a zero-build, single-page web application for generating Work Breakdown Structures (WBS) for engineering projects. It provides a terminal-themed interface for project planning, budgeting, and schedule management with AI-powered features.
 
 **Location:** `/Volumes/mjamiv_2/claude-code/ipc-builder/`
 **GitHub:** https://github.com/mjamiv/IPC-Builder
@@ -12,11 +12,14 @@ This file provides guidance to Claude Code when working with the IPC Builder (WB
 
 ## Tech Stack
 
-- **HTML5** - Single-file application
+- **HTML5** - Single-file application (~14,000+ lines)
 - **CSS3** - Terminal/console theme with dark background and gold accents
 - **Vanilla JavaScript** - No frameworks
 - **Chart.js** (via CDN) - Data visualization
+- **PDF.js** (via CDN) - PDF parsing for RFP import
+- **html2pdf.js** (via CDN) - PDF export functionality
 - **Google Fonts** - JetBrains Mono (monospace)
+- **OpenAI API** - AI chat assistant and analytics (requires user API key)
 
 ## Running the Application
 
@@ -37,9 +40,9 @@ Or access the live deployment at: https://mjamiv.github.io/IPC-Builder/
 
 ### Single-File Structure
 All code is contained in `index.html`:
-- Lines 1-396: HTML structure and CSS styles
-- Lines 397-603: HTML markup (terminal UI, forms, tables)
-- Lines 604-1279: JavaScript application logic
+- Lines 1-2100: CSS styles (including modals, chat, Gantt, insights panels)
+- Lines 2100-3800: HTML markup (terminal UI, forms, tables, modals)
+- Lines 3800-14300+: JavaScript application logic
 
 ### Data Model
 
@@ -51,7 +54,7 @@ projectData = {
     budgets: {},       // { discipline: totalBudget }
     claiming: {},      // { "discipline-package": claimPercentage }
     dates: {},         // { "discipline-package": { start, end } }
-    calculator: {      // Cost estimator data (NEW)
+    calculator: {      // Cost estimator data
         totalConstructionCost: 0,
         designFeePercent: 15,
         projectType: 'Highway/Roadway',
@@ -59,19 +62,49 @@ projectData = {
         complexityOverrides: {},  // Manual complexity settings per discipline
         isCalculated: false,
         manualEdits: {}          // Track which budgets were manually edited
-    }
+    },
+    // RFP-extracted data
+    projectScope: '',           // Project scope description from RFP
+    scheduleNotes: '',          // Schedule notes from RFP analysis
+    disciplineScopes: {}        // Per-discipline scope descriptions
 }
 ```
 
 ## Key Features
 
 ### 6-Step Wizard Interface
-1. **PHASES** - Define project phases (comma-separated)
+1. **PHASES** - Define project phases (comma-separated) with template selector
 2. **DISCIPLINES** - Select engineering disciplines (grid selection)
 3. **PACKAGES** - Define deliverable packages/milestones
 4. **BUDGET** - Set total budget per discipline (with cost estimator)
-5. **CLAIMING** - Set claiming % per package (must total 100% per discipline)
-6. **SCHEDULE** - Set start/end dates for each package
+5. **CLAIMING** - Set claiming % per package (with scheme presets)
+6. **SCHEDULE** - Set start/end dates (with AI schedule generation)
+
+### Project Templates
+Pre-configured project templates for quick setup:
+- **Highway Reconstruction** - Highway widening/improvement projects
+- **Bridge Replacement** - Bridge design/rehabilitation
+- **Drainage Improvement** - Stormwater management projects
+- **Intersection Improvement** - Traffic signal/safety improvements
+- **Multi-Discipline Infrastructure** - Large-scale projects
+- **Transit/Rail Station** - Transit infrastructure
+
+Templates include: phases, disciplines, packages, construction cost, design fee %, and claiming scheme.
+
+### Persistence System
+Auto-save functionality with localStorage:
+- **Debounced autosave** - Saves 1 second after last change
+- **Recovery modal** - Prompts to restore unsaved work on page load
+- **Form state persistence** - Preserves input values across sessions
+- **Version compatibility** - Storage version checking
+
+### Multi-Project Manager
+Save and manage multiple projects:
+- **Save named projects** - Save current project with custom name
+- **Load projects** - Restore previously saved projects
+- **Duplicate projects** - Create copies of existing projects
+- **Delete projects** - Remove unwanted projects
+- **Compare view** - Side-by-side project comparison
 
 ### Cost Estimator (Step 4: Budget)
 
@@ -83,88 +116,139 @@ projectData = {
 - Project Type (Bridge, Highway/Roadway, Drainage/Utilities)
 - Project Complexity (Low, Medium, High - reference only)
 
-**Calculation Method:**
-```
-Total Design Fee = Construction Cost × Design Fee %
-Budget per Discipline = Total Design Fee × (Normalized Distribution %)
-```
-
-**Project Types & Auto-Complexity:**
-- **Bridge:** Structures=High, Civil=High, Geotechnical=High, Electrical=Low, Traffic=Low
-- **Highway/Roadway:** Civil=High, Traffic=High, Pavement=High, Drainage=High, Survey=High
-- **Drainage/Utilities:** Drainage=High, Utilities=High, Environmental=High, Civil=Medium
-
-**Industry Distribution Percentages:**
-- 3 project types × 18 disciplines × 3 complexity levels
-- Percentages automatically normalized to sum to 100% based on selected disciplines
-- Example: Bridge → Structures → High = 28% (before normalization)
-
 **Industry Comparison Indicators:**
 - **↑** (red) - Above industry range (tooltip shows variance %)
 - **↓** (green) - Below industry range (tooltip shows variance %)
 - **•** (gold) - Within industry range
-- Indicators update in real-time when budgets manually edited
 
-**User Experience:**
-- Collapsible calculator section (expands on first visit)
-- Advanced Settings for per-discipline complexity overrides
-- Manual edits preserved during recalculation
-- Click header to re-expand and recalculate
-- Calculator collapses after calculation with status update
+### MH Benchmark Cost Estimator
 
-**Key Features:**
-- Smart manual edit tracking (excludes edited disciplines from recalculation)
-- Percentage normalization ensures budgets sum to total design fee
-- Benchmark variance tracking for major disciplines
-- Responsive 2-column layout (1-column on mobile)
-- Smooth collapse/expand animations
+**Purpose:** Estimate man-hours for design disciplines based on historical project data.
 
-### WBS Generation
-- Hierarchical WBS numbering: `phase.discipline.package` (e.g., 1.1.1)
-- Budget distribution based on claiming percentages
-- Automatic calculations and validations
+**Features:**
+- 17 discipline categories with account codes
+- Historical benchmark data from 10+ major projects
+- Multiple calculation types: matrix, benchmark, percentage
+- Quantity-based estimation (LF, AC, SF, EA, etc.)
+- Project selection for custom rate calculation
+- Export to budget table with configurable hourly rate
+
+**Disciplines Covered:**
+- Digital Delivery, Drainage, Environmental, MOT
+- Roadway, Traffic, Utilities, Retaining Walls
+- Noise Walls, Bridges (PC Girder, Steel, Rehab)
+- Misc Structures, Geotechnical, Systems, Track
+- ESDC, TSCD
+
+### Claiming Scheme Presets (Step 5)
+Distribution pattern presets:
+- **Linear/Even** - Equal distribution across packages
+- **Front-Loaded** - Higher claiming early (descending)
+- **Back-Loaded** - Higher claiming late (ascending)
+- **Bell Curve** - Peak in middle packages
+- Preview before applying
+
+### AI Schedule Generation (Step 6)
+Uses OpenAI API to generate optimized schedules:
+- Configure project start date
+- Set project duration
+- AI considers discipline dependencies and industry standards
+- One-click application to schedule table
+
+### AI Chat Assistant
+Floating chat interface with natural language editing:
+- **Context-aware** - Knows current step and project data
+- **Tool calling** - Can modify budgets, add/remove disciplines, adjust schedules
+- **Draggable panel** - Position persists across sessions
+- **API key management** - Secure local storage
+
+**Available Tools:**
+- `adjustBudget` - Modify discipline budgets
+- `addDiscipline` - Add new disciplines to project
+- `removeDiscipline` - Remove disciplines from project
+- `modifySchedule` - Change schedule dates
+- `whatIf` - Run scenario analysis
+- `getProjectSummary` - Generate project overview
+
+### AI Insights Panel
+Predictive analytics on results page:
+- **Risk Score** - Calculated from disciplines, budget concentration, schedule density
+- **Cost Forecast** - Projection with contingency
+- **Schedule Forecast** - Estimated completion with buffer
+- **Budget Health** - Analysis of budget distribution
+- **AI Suggestions** - Generated recommendations (requires API key)
+
+### RFP Wizard
+Import project data from RFP documents:
+- **PDF Import** - Drag & drop or file selection
+- **Page Range Selection** - Process specific pages
+- **Text Preview** - Review extracted content
+- **AI Analysis** - Extract quantities and project info using GPT-4
+- **Chunked Processing** - Handles large documents efficiently
+- **Quantity Extraction** - Roadway length, bridge area, utilities, etc.
+- **Apply to Estimator** - Transfer quantities to MH estimator
+- **Usage Statistics** - Track API token usage and cost
+
+### Gantt Chart
+Visual timeline view of project schedule:
+- Discipline-level collapsible rows
+- Package-level detail bars
+- Current date marker
+- Hover tooltips with dates and budget
+- Expand/collapse all controls
+
+### WBS Inline Editing
+Direct editing on the results page:
+- Edit discipline budgets inline
+- Modify claiming percentages
+- Update schedule dates
+- Add/remove disciplines, packages, phases
+- Recalculate budgets from industry standards
+- Clear WBS and start over
+
+### Export Options
+Multiple export formats from Reports panel:
+- **CSV Export** - WBS structure table
+- **Full Data CSV** - Complete project data including calculator settings
+- **PDF Report** - Professional project summary with charts
+- **Import CSV** - Restore project from exported data
+- **Share URL** - Generate shareable project link
+- **RFP Data Export** - Export extracted RFP quantities
 
 ### Data Visualization
-- **Chart Types:** Line or bar charts
+- **Chart Types:** Line or bar charts (including stacked)
 - **Views:** Cumulative or monthly
 - **Filters:** By phase, discipline
 - **Data:** BCWS (Planned) vs ACWP (Actual - TBD)
-
-### Export
-- CSV export of complete WBS table
-- Filename: `wbs_structure.csv`
+- **Discipline colors** - 18-color palette for visibility
 
 ## Recent Changes
 
-### Latest: Cost Estimator Feature (January 2026)
+### Latest: MH Benchmark Cost Estimator (January 2026)
+- Added comprehensive man-hour estimation system
+- Historical benchmark data from 10+ major infrastructure projects
+- 17 discipline categories with quantity-based calculation
+- Project-specific rate customization
+- Integration with budget table
 
-**Major new feature:** Added cost estimator/pricing calculator to Budget tab (Step 4).
+### Previous: AI Features & RFP Import
+- AI Chat Assistant with natural language WBS editing
+- AI-powered schedule generation
+- AI Insights panel with predictive analytics
+- RFP Wizard for PDF document import and analysis
 
-**What's New:**
-- Collapsible calculator with 4 inputs (Construction Cost, Design Fee %, Project Type, Complexity)
-- 3 project types with auto-complexity mapping for 18 disciplines
-- Industry-standard distribution percentages (54 unique combinations)
-- Real-time budget calculation with percentage normalization
-- Industry comparison indicators (↑↓•) with hover tooltips showing variance
-- Advanced settings for per-discipline complexity overrides
-- Smart manual edit tracking preserves user changes during recalculation
-- +598 lines of code added to index.html
+### Previous: Persistence & Templates
+- Auto-save to localStorage with recovery
+- Multi-project manager
+- 6 project templates
+- Claiming scheme presets
 
-**Technical Details:**
-- New `calculator` property in `projectData` object
-- 3 new data constants: `projectComplexityMap`, `industryDistribution`, `industryBenchmarks`
-- 9 new functions for calculator logic and UI
-- Modified `buildBudgetTable()` to include indicator column
-- Added calculator CSS with tooltip system
-
-### Previous Updates (Application Defaults)
-
-1. **Simplified default phases** - Changed from full list to minimal `"Base,"` to encourage customization
-2. **Updated phase quick tags** - Replaced "Construction Support" with "As-Builts"
-3. **Revised package defaults** - Changed from percentage-based (50%, 90%) to milestone-based (Preliminary, Interim, Final, RFC, As-Buit)
-4. **Reduced pre-selected disciplines** - Only "Structures" and "Design Management" are now pre-selected (down from 7 disciplines)
-5. **Added database roadmap note** - Code comment indicates future database integration for budget values
-6. **Updated README** - Added live app URL: https://mjamiv.github.io/IPC-Builder/
+### Previous: Cost Estimator Feature
+- Collapsible calculator with 4 inputs
+- 3 project types with auto-complexity mapping
+- Industry-standard distribution percentages
+- Real-time budget calculation with normalization
+- Industry comparison indicators
 
 ## Default Values
 
@@ -181,54 +265,26 @@ Only 2 disciplines are pre-selected by default:
 - Structures
 - Design Management
 
-All other disciplines (Civil, Drainage, Electrical, Environmental, Traffic, ITS, Mechanical, Geotechnical, Survey, Landscape, Utilities, Lighting, Pavement, Bridges, Safety, QA/QC) are available but not pre-selected.
+### Claiming Scheme Presets
+- **Linear:** Equal distribution
+- **Front-Loaded:** `[30, 25, 20, 15, 10]` descending
+- **Back-Loaded:** `[10, 15, 20, 25, 30]` ascending
+- **Bell Curve:** `[15, 25, 30, 20, 10]` center-weighted
 
-### Example Budgets
-Hardcoded in `exampleBudgets` object (lines 639-660):
-- Structures: $450,000
-- Design Management: $180,000
-- Civil: $320,000
-- (etc.)
-
-**Note:** Comment in code indicates future plan to use database for budgets instead of hardcoded values.
-
-### Default Claiming Scheme
-`[10, 15, 25, 30, 20]` - Distribution across 5 packages
-
-### Cost Estimator Data (NEW)
-
-**Project Complexity Map** (lines 673-699)
-- 3 project types × 18 disciplines
-- Auto-assigns Low/Medium/High complexity per discipline based on project type
-- Example: Bridge projects auto-assign Structures=High, Traffic=Low
-
-**Industry Distribution Percentages** (lines 701-763)
-- 3 project types × 18 disciplines × 3 complexity levels = 162 data points
-- Base percentages before normalization
-- Example distributions:
-  - Bridge → Structures → High: 28%
-  - Highway/Roadway → Civil → High: 22%
-  - Drainage/Utilities → Drainage → High: 26%
-
-**Industry Benchmarks** (lines 765-788)
-- Variance calculation ranges for major disciplines
-- Structure: `{ min, max, typical }` as ratios (0.0-1.0)
-- Currently covers ~6 key disciplines per project type
-- Used for ↑↓• indicator determination
-
-**Calculator Defaults:**
-- Design Fee %: 15%
-- Project Type: "Highway/Roadway"
-- Project Complexity: "Medium" (reference only)
+### MH Estimator Configuration
+- **Historical Projects:** IH 820, BC Highway 1/5, Federal Way Link Extension, Foothill LRT, I-15/I-17, Ottawa LRT, US 97, 264th Street, 30 Crossing, and more
+- **Default hourly rate:** $150/hr for budget conversion
+- **Complexity levels:** Low, Medium, High
 
 ## Color Palette
 
 Terminal/console theme with gold accents:
-- **Background:** `#0a0a0a` (body), `#0d0d0d` (terminal)
+- **Background:** `#0a0a0a` (body), `#0d0d0d` (terminal), `#1a1a1a` (cards)
 - **Primary accent:** `#ffd700` (gold)
 - **Text:** `#ffd700` (gold), `#fff` (white), `#888` (gray)
 - **Borders:** `#333`, `#444`
-- **Status indicators:** `#00ff00` (ok), `#ff4444` (error)
+- **Status indicators:** `#00ff00` (ok/low risk), `#ff4444` (error/high risk)
+- **Risk colors:** Green (low), Gold (medium), Red (high)
 
 ## Key Functions
 
@@ -238,34 +294,82 @@ Terminal/console theme with gold accents:
 - `prevStep()` - Go back
 - `showStep(step)` - Display step content
 
-### Data Building
-- `buildBudgetTable()` - Generate budget input table with indicator column (line 1163)
-- `buildClaimingTable()` - Generate claiming % grid
-- `buildDatesTable()` - Generate schedule table
-- `buildWBSTable()` - Generate final WBS output
+### Persistence
+- `saveToLocalStorage()` - Save project to localStorage
+- `loadFromLocalStorage()` - Load saved data
+- `triggerAutosave()` - Trigger debounced save
+- `showRecoveryModal()` - Display recovery options
+- `checkForSavedData()` - Check for recoverable data
 
-### Cost Estimator Functions (NEW)
-- `initCalculator()` - Initialize calculator inputs and event listeners (line 1299)
-- `updateCalculatorTotal()` - Calculate and display total design fee (line 1288)
-- `toggleCalculator()` - Expand/collapse calculator section (line 1210)
-- `showComplexityOverrides()` - Show/hide advanced settings (line 1223)
-- `buildComplexityOverrideGrid()` - Generate complexity override controls (line 1234)
-- `saveComplexityOverride()` - Save manual complexity settings (line 1260)
-- `updateComplexityDefaults()` - Reset overrides when project type changes (line 1274)
-- `calculateBudgets()` - Main calculation logic with normalization (line 1305)
-- `updateIndustryIndicators()` - Calculate variance and display indicators (line 1377)
-- `updateTotalBudget()` - Sum budget inputs, trigger indicator updates (line 1196)
+### Project Management
+- `saveNamedProject()` - Save project with name
+- `loadProject(projectId)` - Load saved project
+- `duplicateProject(projectId)` - Create project copy
+- `deleteProject(projectId)` - Remove project
+- `populateProjectsList()` - Render project list
 
-### Chart Management
-- `createChart()` - Initialize Chart.js
-- `getChartData()` - Calculate chart data points
-- `updateChart()` - Refresh chart with filters
+### Templates
+- `toggleTemplateSelector()` - Show/hide template selector
+- `populateTemplates()` - Render template cards
+- `applyTemplate(templateId)` - Apply template to wizard
 
-### Utilities
-- `validate()` - Step validation
-- `saveCurrentStep()` - Persist current data
-- `exportCSV()` - Generate CSV download
-- `updateKPIs()` - Calculate summary metrics
+### Cost Estimator
+- `initCalculator()` - Initialize calculator inputs
+- `calculateBudgets()` - Main calculation logic
+- `updateIndustryIndicators()` - Update variance indicators
+- `updateCalculatorTotal()` - Calculate total design fee
+
+### MH Benchmark Estimator
+- `initMHEstimator()` - Initialize MH estimator UI
+- `estimateMH(disciplineId, quantity)` - Calculate man-hours
+- `calculateWeightedRate(projects)` - Calculate weighted rate from projects
+- `generateFullMHEstimate(quantities)` - Full project MH estimate
+- `applyMHEstimate()` - Apply to budget table
+- `showBenchmarkSelection()` - Show project selection modal
+
+### Claiming Presets
+- `toggleClaimingPresets()` - Show/hide presets panel
+- `previewScheme()` - Preview selected scheme
+- `applyClaimingScheme()` - Apply to all disciplines
+- `adjustSchemeToPackageCount()` - Adapt scheme to package count
+
+### AI Features
+- `toggleChat()` - Open/close chat panel
+- `sendMessage()` - Send message to AI
+- `executeToolCall(name, args)` - Execute AI tool call
+- `generateAIInsights()` - Generate AI recommendations
+- `generateAISchedule()` - Generate AI-optimized schedule
+- `calculateBasicInsights()` - Calculate risk and forecasts
+
+### RFP Wizard
+- `openRfpWizard()` - Open RFP import modal
+- `handleRfpUpload(file)` - Process uploaded PDF
+- `extractPdfText(file, pageNumbers)` - Extract text from PDF
+- `analyzeRfpDocument()` - AI analysis of RFP content
+- `applyRfpData()` - Apply extracted data to project
+- `applyRfpQuantitiesToEstimator()` - Transfer to MH estimator
+
+### Gantt Chart
+- `buildGanttChart()` - Generate Gantt visualization
+- `toggleGanttDiscipline(discipline)` - Expand/collapse discipline
+- `expandAllGantt()` / `collapseAllGantt()` - Bulk expand/collapse
+- `showGanttTooltip(e)` - Show bar tooltip
+
+### WBS Editing
+- `toggleWBSEditMode()` - Enter/exit edit mode
+- `buildWBSTableEditable()` - Build editable table
+- `editDisciplineBudget()` - Inline budget editing
+- `editClaimPercent()` - Inline claiming editing
+- `confirmAddDiscipline()` / `confirmDeleteDiscipline()` - Add/remove disciplines
+- `recalculateBudgets()` - Recalculate from industry standards
+
+### Export
+- `exportCSV()` - Export WBS table
+- `exportAllDataCSV()` - Export complete project data
+- `exportProjectSummary()` - Generate PDF report
+- `printReport()` - Print/PDF export
+- `importData()` - Import CSV file
+- `shareProjectUrl()` - Generate shareable URL
 
 ## UI Components
 
@@ -276,17 +380,54 @@ Terminal/console theme with gold accents:
 
 ### Terminal Header
 - Application title: "WBS TERMINAL v1.0"
-- Status indicator (right side)
+- Reports button (visible on results page)
+- Autosave indicator
 
-### Forms & Inputs
-- Dark inputs with gold borders on focus
-- Quick-add tags for common values
-- Real-time validation and totals
+### Template Selector
+- Collapsible section on Step 1
+- Card grid with project templates
+- Stats showing phases, disciplines, packages count
 
-### Tables
-- Sticky headers/footers for scrollable tables
-- Inline editing with `table-input` class
-- Color-coded status (green/red)
+### Cost Estimator Calculator
+- Collapsible section with header
+- 2-column grid layout (responsive)
+- Total Design Fee display
+- Advanced settings for complexity overrides
+
+### MH Estimator
+- Collapsible panel in Budget step
+- Discipline-by-discipline quantity inputs
+- Historical project selection
+- Apply to budget button
+
+### Claiming Presets Panel
+- Collapsible section in Claiming step
+- Radio button scheme selection
+- Preview table before applying
+
+### AI Chat Panel
+- Floating panel (fixed position, draggable)
+- Message history with markdown support
+- Context badge showing current state
+- Settings button for API key
+
+### AI Insights Panel
+- Collapsible panel on results page
+- 4-card grid: Risk, Cost Forecast, Schedule Forecast, Budget Health
+- AI suggestions section with loading state
+
+### RFP Wizard Modal
+- 3-stage wizard: Upload → Configure → Review
+- Drag & drop file zone
+- Page range selector
+- Quantity extraction display
+- Usage statistics
+
+### Gantt Chart
+- Horizontal timeline with month columns
+- Discipline rows with expand/collapse
+- Package bars with hover tooltips
+- Current date marker
 
 ### KPI Cards
 - 4-card grid showing:
@@ -295,30 +436,29 @@ Terminal/console theme with gold accents:
   - Disciplines count
   - Project duration (months)
 
-### Cost Estimator Calculator (NEW)
-- Collapsible section with header (click to expand/collapse)
-- 2-column grid layout for inputs (responsive)
-- Total Design Fee display box
-- Action buttons: "Advanced Settings" and "Calculate Estimates"
-- Advanced settings section (hidden by default):
-  - 3-column grid of complexity overrides
-  - Asterisk (*) indicates manual overrides
-- Status indicator in header shows calculation state
+### Recovery Modal
+- Auto-shown on page load if unsaved data exists
+- Preview of saved data summary
+- Restore, Dismiss, or Discard options
 
-### Industry Indicators (NEW)
-- Small symbols in "IND" column of budget table
-- Color-coded: Red (above), Green (below), Gold (within)
-- Tooltip on hover with benchmark details
-- Real-time updates on budget changes
+### Project Manager Modal
+- Save project form
+- Project list with load/duplicate/delete actions
+- Compare view toggle
 
 ## Responsive Design
 
-Breakpoint: `768px` (line 530)
+Breakpoint: `768px`
 - KPI grid: 4 columns → 2 columns
 - Filters: 4 columns → 2 columns
 - Disciplines grid: auto-fill → 2 columns
-- **Calculator grid: 2 columns → 1 column** (NEW)
-- **Complexity override grid: 3 columns → 1 column** (NEW)
+- Calculator grid: 2 columns → 1 column
+- Complexity override grid: 3 columns → 1 column
+- Insights grid: 4 columns → 2 columns
+
+Breakpoint: `480px`
+- Chat panel: Full width with auto margins
+- Chat FAB: Adjusted position
 
 ## Code Conventions
 
@@ -332,37 +472,40 @@ Breakpoint: `768px` (line 530)
 - `UPPERCASE` for constants and button labels
 
 ### Comments
-- Section markers: `// Data`, `// Navigation`, etc.
+- Section markers: `// ============================================`
+- JSDoc style comments for functions
 - Inline comments for complex logic
+
+### State Management
+- Global state objects: `projectData`, `chatState`, `rfpState`, `mhEstimateState`
+- Constants for configuration: `DISCIPLINE_CONFIG`, `HISTORICAL_BENCHMARKS`, `projectTemplates`
 
 ## Development Guidelines
 
 ### Making Changes
 
 1. **UI Styling**
-   - All styles in `<style>` block (lines 9-395)
+   - All styles in `<style>` block (lines 11-2100)
    - Use existing color variables
    - Maintain terminal aesthetic
+   - Follow card-base and modal-base patterns
 
 2. **Business Logic**
-   - Modify functions in `<script>` block (lines 604-1277)
+   - Modify functions in `<script>` block
    - Maintain data model structure
    - Update validation as needed
+   - Trigger autosave on data changes
 
-3. **Default Values**
-   - Edit phases input default value (line 425)
-   - Edit packages input default value (line 459)
-   - Edit `allDisciplines` array (line 618) - controls pre-selected disciplines
-   - Edit `exampleBudgets` object (line 639) - hardcoded budget values
-   - Edit `defaultClaiming` array (line 663) - claiming percentage distribution
-   - Modify quick-add tags for phases (lines 427-432) and packages (lines 461-467)
+3. **Adding New Modals**
+   - Use `modal-base` class system
+   - Include header with close button
+   - Add keyboard escape handler
 
-4. **Cost Estimator Data (NEW)**
-   - Edit `projectComplexityMap` (lines 673-699) - auto-complexity assignments
-   - Edit `industryDistribution` (lines 701-763) - distribution percentages
-   - Edit `industryBenchmarks` (lines 765-788) - variance calculation ranges
-   - Modify calculator HTML inputs (lines 618-676) for different options
-   - Adjust calculator CSS (lines 396-537) for styling changes
+4. **Adding New Features**
+   - Group related functions with section comments
+   - Add state tracking if needed
+   - Include persistence integration
+   - Update AI context if relevant
 
 ### Testing Checklist
 
@@ -377,57 +520,74 @@ Breakpoint: `768px` (line 530)
 - [ ] Responsive breakpoints work
 - [ ] Edit mode returns to wizard
 
-**Cost Estimator (NEW):**
-- [ ] Calculator expands on first visit to Step 4
-- [ ] Construction cost × design fee % = correct total
+**Persistence:**
+- [ ] Auto-save triggers on data changes
+- [ ] Recovery modal appears with saved data
+- [ ] Restore, Dismiss, Discard all work correctly
+- [ ] Project manager save/load functions
+
+**Cost Estimator:**
+- [ ] Calculator expands on first visit
 - [ ] All 3 project types calculate correctly
-- [ ] Percentages sum to total design fee
-- [ ] Calculator collapses after calculation
-- [ ] Click header re-expands calculator
-- [ ] Status updates correctly ("Configure inputs" → "Estimates applied")
-- [ ] Industry indicators (↑↓•) appear after calculation
-- [ ] Tooltips display correct ranges and variance
-- [ ] Manual budget edits update indicators immediately
+- [ ] Industry indicators update in real-time
 - [ ] Manual edits preserved during recalculation
-- [ ] Advanced settings show/hide complexity grid
-- [ ] Complexity overrides affect calculations
-- [ ] Asterisk (*) marks manual complexity overrides
-- [ ] Project type change clears overrides
-- [ ] Calculator validates construction cost (required, > 0)
-- [ ] Calculator validates design fee (1-30%)
-- [ ] Responsive layout: 2-col → 1-col on mobile
+
+**MH Estimator:**
+- [ ] All disciplines calculate correctly
+- [ ] Project selection modal works
+- [ ] Quantities apply to calculations
+- [ ] Apply to budget updates table
+
+**AI Features:**
+- [ ] Chat opens/closes correctly
+- [ ] Messages send and receive
+- [ ] Tool calls execute properly
+- [ ] Insights panel calculates correctly
+- [ ] Schedule generation applies dates
+
+**RFP Wizard:**
+- [ ] PDF upload and parsing works
+- [ ] Page range selection functions
+- [ ] AI analysis extracts quantities
+- [ ] Apply data populates estimator
+
+**Gantt Chart:**
+- [ ] Timeline renders correctly
+- [ ] Expand/collapse disciplines
+- [ ] Tooltips display on hover
 
 ## Known Limitations
 
-1. **No persistence** - Data lost on page refresh
+1. **No server persistence** - All data stored client-side in localStorage
 2. **No actual cost tracking** - ACWP always shows $0
 3. **No user authentication** - Client-side only
-4. **No validation rules** - Beyond basic required fields
-5. **No undo/redo** - Changes are immediate
+4. **API key exposure risk** - OpenAI key stored in localStorage
+5. **No real-time collaboration** - Single-user only
+6. **No undo/redo** - Changes are immediate
+7. **Large file size** - 14,000+ lines in single file
 
 ## Future Enhancement Ideas
 
-- LocalStorage persistence
-- Import CSV functionality
-- Multiple project management
+- Server-side persistence with user accounts
+- Real-time collaboration features
 - Actual cost tracking integration
-- **Database integration for budgets** (noted in code comments)
-- Gantt chart visualization
-- Resource allocation
-- Template library
-- Print/PDF export
+- Database integration for budgets and benchmarks
+- Gantt chart drag-and-drop editing
+- Resource allocation tracking
+- Template library expansion
+- Print/PDF export improvements
 - Fix typo in default packages ("As-Buit" → "As-Built")
-- **Expand industry benchmarks** - Add benchmark ranges for all 18 disciplines
-- **Custom project types** - Allow users to create and save custom project type profiles
-- **Export calculator settings** - Save/load calculator configurations
-- **Historical comparison** - Compare current project budgets to past projects
+- Split into multiple files for maintainability
+- Add unit tests
 
 ## Performance Considerations
 
 - All calculations happen client-side
 - Chart re-renders on filter change
-- No optimization needed for typical project sizes (< 100 WBS elements)
-- Scrollable containers for large tables (max-height with overflow)
+- PDF.js loaded only when RFP wizard used
+- Debounced autosave prevents excessive writes
+- Large documents chunked for AI processing
+- Gantt chart virtualization for large projects
 
 ## Accessibility
 
@@ -436,12 +596,16 @@ Breakpoint: `768px` (line 530)
 - Color contrast: Gold (#ffd700) on black (#0a0a0a) meets WCAG AA
 - Hover states for interactive elements
 - Focus states for inputs
+- ARIA labels on interactive elements
 
 ## Browser Compatibility
 
 - Modern browsers (Chrome, Firefox, Safari, Edge)
 - Requires ES6+ support
-- Chart.js loaded via CDN
+- Libraries loaded via CDN:
+  - Chart.js 4.x
+  - PDF.js 3.11.174
+  - html2pdf.js 0.10.1
 - No polyfills included
 
 ## Deployment
@@ -459,10 +623,11 @@ Breakpoint: `768px` (line 530)
 
 - `index.html` - Complete application (only file needed)
 - `README.md` - Basic project description
+- `CLAUDE.md` - This documentation file
 
-## Related Projects
+## Security Considerations
 
-This project is part of the mjamiv/claude-code repository which also includes:
-- btcyoy - Bitcoin historical price tracker
-- rorimartello - Author website
-- pile-designer - Pile design tool (in development)
+- OpenAI API key stored in localStorage (user-provided)
+- No sensitive data transmitted to external servers except OpenAI API
+- PDF processing happens client-side
+- URL sharing exposes project data in URL parameters
