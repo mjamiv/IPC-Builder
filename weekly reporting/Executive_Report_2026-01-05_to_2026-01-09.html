@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IPC-Builder Weekly Executive Report | Jan 5-9, 2026</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --primary: #1e3a5f;
+            --primary-light: #2d5a8a;
+            --accent: #d4a017;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-500: #6b7280;
+            --gray-700: #374151;
+            --gray-900: #111827;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: white;
+            font-size: 11pt;
+        }
+        
+        .page {
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in;
+        }
+        
+        @media print {
+            .page {
+                padding: 0.4in;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            body {
+                font-size: 10pt;
+            }
+        }
+        
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 20px;
+            border-bottom: 3px solid var(--primary);
+            margin-bottom: 24px;
+        }
+        
+        .header-left h1 {
+            font-size: 24pt;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        
+        .header-left .subtitle {
+            font-size: 14pt;
+            color: var(--gray-500);
+            font-weight: 400;
+        }
+        
+        .header-right {
+            text-align: right;
+            font-size: 10pt;
+            color: var(--gray-500);
+        }
+        
+        .header-right .date-range {
+            font-size: 12pt;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        /* KPI Dashboard */
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        
+        .kpi-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .kpi-card.accent {
+            background: linear-gradient(135deg, var(--accent) 0%, #b8860b 100%);
+        }
+        
+        .kpi-card.success {
+            background: linear-gradient(135deg, var(--success) 0%, #047857 100%);
+        }
+        
+        .kpi-value {
+            font-size: 28pt;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+        
+        .kpi-label {
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+            margin-top: 4px;
+        }
+        
+        /* Section Headers */
+        .section {
+            margin-bottom: 24px;
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--gray-200);
+        }
+        
+        .section-header h2 {
+            font-size: 14pt;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .section-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 8pt;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+        
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 16px;
+        }
+        
+        .summary-card h3 {
+            font-size: 11pt;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .summary-card ul {
+            list-style: none;
+            font-size: 10pt;
+        }
+        
+        .summary-card li {
+            padding: 4px 0;
+            padding-left: 16px;
+            position: relative;
+        }
+        
+        .summary-card li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--success);
+            font-weight: bold;
+        }
+        
+        .summary-card li.pending::before {
+            content: "○";
+            color: var(--warning);
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 9.5pt;
+            margin-bottom: 16px;
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 10px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 9pt;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+        
+        tr:nth-child(even) {
+            background: var(--gray-50);
+        }
+        
+        tr:hover {
+            background: var(--gray-100);
+        }
+        
+        .highlight-row {
+            background: #fef3c7 !important;
+        }
+        
+        /* Status Badges */
+        .status {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 500;
+        }
+        
+        .status-complete {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-progress {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-pending {
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 10pt;
+        }
+        
+        .progress-bar {
+            height: 24px;
+            background: var(--gray-200);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+        }
+        
+        .progress-segment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 8pt;
+            font-weight: 600;
+        }
+        
+        .progress-complete {
+            background: var(--success);
+        }
+        
+        .progress-inprogress {
+            background: var(--warning);
+        }
+        
+        .progress-pending {
+            background: var(--gray-400);
+        }
+        
+        /* Risk Indicators */
+        .risk-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        
+        .risk-card {
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid;
+        }
+        
+        .risk-low {
+            background: #ecfdf5;
+            border-color: var(--success);
+        }
+        
+        .risk-medium {
+            background: #fffbeb;
+            border-color: var(--warning);
+        }
+        
+        .risk-high {
+            background: #fef2f2;
+            border-color: var(--danger);
+        }
+        
+        .risk-title {
+            font-size: 9pt;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .risk-desc {
+            font-size: 8.5pt;
+            color: var(--gray-700);
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-300);
+            display: flex;
+            justify-content: space-between;
+            font-size: 9pt;
+            color: var(--gray-500);
+        }
+        
+        /* Utilities */
+        .text-success { color: var(--success); }
+        .text-warning { color: var(--warning); }
+        .text-danger { color: var(--danger); }
+        .text-muted { color: var(--gray-500); }
+        .font-mono { font-family: 'JetBrains Mono', monospace; font-size: 9pt; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .font-bold { font-weight: 600; }
+        
+        /* Print Button */
+        .print-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background: var(--primary-light);
+        }
+        
+        @media print {
+            .print-btn { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">📄 Print / Save PDF</button>
+    
+    <div class="page">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>IPC-Builder</h1>
+                <div class="subtitle">Weekly Development Report</div>
+            </div>
+            <div class="header-right">
+                <div class="date-range">January 5–9, 2026</div>
+                <div>Prepared for: Executive Sponsor Committee</div>
+                <div>Report Date: January 9, 2026</div>
+            </div>
+        </div>
+        
+        <!-- KPI Dashboard -->
+        <div class="kpi-dashboard">
+            <div class="kpi-card">
+                <div class="kpi-value">73</div>
+                <div class="kpi-label">Commits</div>
+            </div>
+            <div class="kpi-card accent">
+                <div class="kpi-value">45K+</div>
+                <div class="kpi-label">Lines Added</div>
+            </div>
+            <div class="kpi-card success">
+                <div class="kpi-value">7</div>
+                <div class="kpi-label">Major Features</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">76</div>
+                <div class="kpi-label">Files Changed</div>
+            </div>
+        </div>
+        
+        <!-- Executive Summary -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📋 Executive Summary</h2>
+            </div>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h3>✅ Completed This Week</h3>
+                    <ul>
+                        <li>Complete Vite migration – modern build system with 60% faster dev iteration</li>
+                        <li>MH Benchmark Estimator – data-driven budgeting across 17 disciplines</li>
+                        <li>AI Features Suite – ChatGPT assistant, schedule generation, RFP wizard</li>
+                        <li>CSS Modularization – 19 organized files for maintainability</li>
+                        <li>Enhanced PDF Reports – executive-ready deliverables with charts</li>
+                        <li>CI/CD Pipeline – automated linting, building, and deployment</li>
+                    </ul>
+                </div>
+                <div class="summary-card">
+                    <h3>📌 Next Week Priorities</h3>
+                    <ul>
+                        <li class="pending">Write unit tests for core utilities (Vitest)</li>
+                        <li class="pending">Modularize legacy JavaScript code</li>
+                        <li class="pending">Add E2E tests for critical user flows</li>
+                        <li class="pending">Performance optimization – lazy load PDF.js</li>
+                        <li class="pending">TypeScript migration planning</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Overview -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📊 Project Progress</h2>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span><strong>Vite Migration</strong></span>
+                    <span class="text-success font-bold">100% Complete</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-segment progress-complete" style="width: 100%">COMPLETE</div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span><strong>Code Modularization</strong></span>
+                    <span class="text-warning font-bold">35% Complete</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-segment progress-complete" style="width: 35%">CSS Done</div>
+                    <div class="progress-segment progress-inprogress" style="width: 25%">JS In Progress</div>
+                    <div class="progress-segment progress-pending" style="width: 40%"></div>
+                </div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span><strong>Test Coverage</strong></span>
+                    <span class="text-warning font-bold">0% (Framework Ready)</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-segment progress-inprogress" style="width: 10%">Setup</div>
+                    <div class="progress-segment progress-pending" style="width: 90%"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Delivered -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🚀 Features Delivered</h2>
+                <span class="section-badge">7 Major Features</span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%">Feature</th>
+                        <th style="width: 40%">Description</th>
+                        <th style="width: 25%">Business Impact</th>
+                        <th style="width: 10%">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight-row">
+                        <td><strong>Vite Build System</strong></td>
+                        <td>Modern bundler with HMR, code splitting, optimized production builds</td>
+                        <td>60% faster development iteration</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>MH Benchmark Estimator</strong></td>
+                        <td>Historical man-hour estimation across 17 engineering disciplines</td>
+                        <td>Data-driven budgeting with confidence bounds</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>AI Chat Assistant</strong></td>
+                        <td>Natural language WBS editing with GPT tool calling</td>
+                        <td>Conversational project management</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>AI Schedule Generation</strong></td>
+                        <td>GPT-powered optimized schedule creation</td>
+                        <td>Intelligent discipline sequencing</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>RFP Wizard</strong></td>
+                        <td>PDF import with AI-powered quantity extraction</td>
+                        <td>Automated project data extraction</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>PDF Reports</strong></td>
+                        <td>Professional reports with charts, Gantt views, executive summaries</td>
+                        <td>Executive-ready deliverables</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSS Modularization</strong></td>
+                        <td>19-file modular architecture following SMACSS/BEM</td>
+                        <td>Maintainable, scalable styling</td>
+                        <td><span class="status status-complete">Complete</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Page Break for Print -->
+        <div class="page-break"></div>
+        
+        <!-- Development Activity -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📈 Development Activity</h2>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Day</th>
+                        <th class="text-center">Commits</th>
+                        <th>Key Focus Areas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Monday, Jan 5</strong></td>
+                        <td class="text-center">10</td>
+                        <td>Initial setup, cost estimator, documentation, project foundation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tuesday, Jan 6</strong></td>
+                        <td class="text-center">8</td>
+                        <td>Claiming presets, PDF exports, code quality improvements</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Wednesday, Jan 7</strong></td>
+                        <td class="text-center">14</td>
+                        <td>AI features suite, RFP wizard, reports centralization</td>
+                    </tr>
+                    <tr class="highlight-row">
+                        <td><strong>Thursday, Jan 8</strong></td>
+                        <td class="text-center">28</td>
+                        <td>MH estimator, benchmarking data (14 files), bug fixes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Friday, Jan 9</strong></td>
+                        <td class="text-center">13</td>
+                        <td>CSS modularization, Vite migration, repository cleanup</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Technical Achievements -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🔧 Technical Achievements</h2>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Files Created</th>
+                        <th>Key Examples</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Source Code</strong></td>
+                        <td>15</td>
+                        <td>main.js, state.js, openai.js, localStorage.js</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CSS Modules</strong></td>
+                        <td>19</td>
+                        <td>calculator.css, modals.css, gantt.css, chat.css</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Benchmarking Data</strong></td>
+                        <td>14</td>
+                        <td>bridges.json, roadway.json, drainage.json, utilities.json</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Configuration</strong></td>
+                        <td>7</td>
+                        <td>vite.config.js, package.json, .eslintrc.json</td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI/CD Workflows</strong></td>
+                        <td>2</td>
+                        <td>ci.yml (lint/build), deploy.yml (GitHub Pages)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Documentation</strong></td>
+                        <td>5</td>
+                        <td>README.md, CLAUDE.md, VITE_MIGRATION_PLAN.md</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Risks & Mitigations -->
+        <div class="section">
+            <div class="section-header">
+                <h2>⚠️ Risks & Mitigations</h2>
+            </div>
+            
+            <div class="risk-grid">
+                <div class="risk-card risk-medium">
+                    <div class="risk-title">Legacy Code (12K lines)</div>
+                    <div class="risk-desc">app-legacy.js needs gradual modularization. Plan: Extract wizard steps over next 2-3 weeks.</div>
+                </div>
+                <div class="risk-card risk-low">
+                    <div class="risk-title">PDF.js Bundle Size (1MB)</div>
+                    <div class="risk-desc">Large vendor chunk. Mitigation: Implement lazy loading; consider CDN-only approach.</div>
+                </div>
+                <div class="risk-card risk-low">
+                    <div class="risk-title">Test Coverage (0%)</div>
+                    <div class="risk-desc">Vitest and Playwright configured but no tests written. Priority for next sprint.</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Build Metrics -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📦 Production Build Metrics</h2>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Asset</th>
+                        <th class="text-right">Size</th>
+                        <th class="text-right">Gzipped</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="font-mono">index.html</td>
+                        <td class="text-right">64.51 KB</td>
+                        <td class="text-right">10.76 KB</td>
+                        <td>Main entry point</td>
+                    </tr>
+                    <tr>
+                        <td class="font-mono">main-*.js</td>
+                        <td class="text-right">290.64 KB</td>
+                        <td class="text-right">68.43 KB</td>
+                        <td>Application code</td>
+                    </tr>
+                    <tr>
+                        <td class="font-mono">vendor-charts-*.js</td>
+                        <td class="text-right">206.11 KB</td>
+                        <td class="text-right">69.50 KB</td>
+                        <td>Chart.js library</td>
+                    </tr>
+                    <tr>
+                        <td class="font-mono">vendor-pdf-*.js</td>
+                        <td class="text-right">1,047.90 KB</td>
+                        <td class="text-right">287.59 KB</td>
+                        <td>PDF.js library (optimization target)</td>
+                    </tr>
+                    <tr>
+                        <td class="font-mono">main-*.css</td>
+                        <td class="text-right">54.05 KB</td>
+                        <td class="text-right">8.89 KB</td>
+                        <td>Compiled styles</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Links -->
+        <div class="section">
+            <div class="section-header">
+                <h2>🔗 Resources</h2>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Resource</th>
+                        <th>URL</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Live Application</strong></td>
+                        <td><a href="https://mjamiv.github.io/IPC-Builder/">https://mjamiv.github.io/IPC-Builder/</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>GitHub Repository</strong></td>
+                        <td><a href="https://github.com/mjamiv/IPC-Builder">https://github.com/mjamiv/IPC-Builder</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>CI/CD Dashboard</strong></td>
+                        <td><a href="https://github.com/mjamiv/IPC-Builder/actions">https://github.com/mjamiv/IPC-Builder/actions</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <div>
+                <strong>IPC-Builder</strong> | WBS Terminal v2.0
+            </div>
+            <div>
+                Confidential | For Internal Use Only
+            </div>
+            <div>
+                Page 1 of 2
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
