@@ -10663,7 +10663,7 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                     grid.innerHTML += `<div class="disc-item selected" onclick="toggleDisc(this)" data-name="${disc}">${disc}</div>`;
                     // Add to example budgets
                     if (!exampleBudgets[disc]) {
-                        exampleBudgets[disc] = budgets[disc] || 100000;
+                        exampleBudgets[disc] = projectData.budgets[disc] || 100000;
                     }
                 }
             });
