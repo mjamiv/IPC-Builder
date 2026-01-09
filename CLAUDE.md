@@ -418,6 +418,18 @@ Terminal/console theme with gold accents:
 - `displayProjectInfoReasoning()` - Display AI reasoning for cost/schedule estimates
 - `showQuantityReasoning(key, label)` - Show quantity reasoning popup
 
+### API Key Management
+- `getValidApiKey()` - Validates and returns stored API key with format checks (sk- prefix, min length)
+- `saveApiKey()` - Validates and saves API key to localStorage with error feedback
+- `showApiKeyModal()` / `hideApiKeyModal()` - API key input modal controls
+- `openChatSettings()` - Open settings to change API key
+
+### Network Error Handling
+- Exponential backoff retry logic (1s, 2s, 4s, 8s, 16s) for all API calls
+- Automatic retry on network errors (HTTP/2 protocol errors, failed fetch)
+- User-friendly error messages with troubleshooting suggestions
+- Console logging for API key status debugging (masked for security)
+
 ### Gantt Chart
 - `buildGanttChart()` - Generate Gantt visualization
 - `toggleGanttDiscipline(discipline)` - Expand/collapse discipline
