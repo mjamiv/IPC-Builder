@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Repository Report - Michael Martello</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap');
+        
+        :root {
+            --primary: #1a365d;
+            --secondary: #2c5282;
+            --accent: #d69e2e;
+            --accent-light: #ecc94b;
+            --text: #2d3748;
+            --text-light: #4a5568;
+            --bg: #ffffff;
+            --bg-alt: #f7fafc;
+            --border: #e2e8f0;
+            --success: #38a169;
+            --info: #3182ce;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @page {
+            size: letter;
+            margin: 0.75in;
+        }
+        
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--text);
+            line-height: 1.6;
+            background: var(--bg);
+            font-size: 11pt;
+        }
+        
+        .report-container {
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 0.5in;
+        }
+        
+        /* Header Section */
+        .header {
+            border-bottom: 4px solid var(--primary);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 120px;
+            height: 4px;
+            background: var(--accent);
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        
+        .logo-section h1 {
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            letter-spacing: -0.5px;
+        }
+        
+        .logo-section .subtitle {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+        
+        .report-meta {
+            text-align: right;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .report-meta .date-range {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.25rem;
+        }
+        
+        .report-meta .author {
+            color: var(--accent);
+            font-weight: 600;
+        }
+        
+        /* Section Headers */
+        h2 {
+            font-family: 'Crimson Pro', Georgia, serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin: 1.75rem 0 0.75rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        h2 .section-icon {
+            width: 24px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+        
+        h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--secondary);
+            margin: 1rem 0 0.5rem;
+        }
+        
+        /* Executive Summary */
+        .executive-summary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+        
+        .executive-summary h2 {
+            color: white;
+            border-bottom-color: rgba(255,255,255,0.3);
+            margin-top: 0;
+        }
+        
+        .executive-summary h2 .section-icon {
+            background: var(--accent);
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-box {
+            background: rgba(255,255,255,0.15);
+            padding: 1rem;
+            border-radius: 6px;
+            text-align: center;
+        }
+        
+        .stat-box .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-light);
+            line-height: 1;
+        }
+        
+        .stat-box .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+        
+        .summary-bullets {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .summary-bullets li {
+            padding: 0.4rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.95rem;
+        }
+        
+        .summary-bullets li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: var(--accent-light);
+            font-weight: bold;
+        }
+        
+        /* Highlights Section */
+        .highlights {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .highlight-card {
+            background: var(--bg-alt);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .highlight-card h4 {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .highlight-card ul {
+            margin: 0;
+            padding-left: 1.25rem;
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .highlight-card li {
+            margin: 0.2rem 0;
+        }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin: 0.75rem 0;
+        }
+        
+        thead {
+            background: var(--primary);
+            color: white;
+        }
+        
+        th {
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        tbody tr:nth-child(even) {
+            background: var(--bg-alt);
+        }
+        
+        tbody tr:hover {
+            background: #edf2f7;
+        }
+        
+        .hash {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.8rem;
+            color: var(--info);
+            background: #ebf8ff;
+            padding: 0.15rem 0.4rem;
+            border-radius: 3px;
+        }
+        
+        .date-cell {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            white-space: nowrap;
+        }
+        
+        /* Files Grid */
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin: 1rem 0;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            background: var(--bg-alt);
+            border-radius: 4px;
+        }
+        
+        .file-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--secondary);
+            color: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        
+        .file-icon.json { background: #38a169; }
+        .file-icon.html { background: #dd6b20; }
+        .file-icon.md { background: #805ad5; }
+        .file-icon.css { background: #3182ce; }
+        
+        .file-path {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.8rem;
+            color: var(--text);
+        }
+        
+        /* Risks Section */
+        .risks-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .risks-list li {
+            padding: 0.5rem 0.75rem;
+            margin: 0.4rem 0;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        
+        .risk-warning {
+            background: #fffaf0;
+            border-left: 4px solid #dd6b20;
+        }
+        
+        .risk-info {
+            background: #ebf8ff;
+            border-left: 4px solid var(--info);
+        }
+        
+        .risk-icon {
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        
+        /* Links Section */
+        .links-section {
+            background: var(--bg-alt);
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 1.5rem;
+        }
+        
+        .links-section a {
+            color: var(--info);
+            text-decoration: none;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.8rem;
+        }
+        
+        .links-section a:hover {
+            text-decoration: underline;
+        }
+        
+        .commit-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            margin: 0.25rem 0.5rem 0.25rem 0;
+            padding: 0.3rem 0.6rem;
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+        }
+        
+        /* Footer */
+        .footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-light);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .footer .note {
+            font-style: italic;
+        }
+        
+        /* Print Styles */
+        @media print {
+            body {
+                font-size: 10pt;
+            }
+            
+            .report-container {
+                padding: 0;
+            }
+            
+            .executive-summary {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            thead {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .highlight-card {
+                break-inside: avoid;
+            }
+            
+            table {
+                break-inside: avoid;
+            }
+        }
+        
+        /* Day headers */
+        .day-header {
+            background: var(--bg-alt);
+            padding: 0.5rem 0.75rem;
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            border-left: 3px solid var(--accent);
+            margin: 1rem 0 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-top">
+                <div class="logo-section">
+                    <h1>Weekly Repository Report</h1>
+                    <div class="subtitle">IPC-Builder Development Activity</div>
+                </div>
+                <div class="report-meta">
+                    <div class="date-range">January 5–9, 2026</div>
+                    <div class="author">Michael Martello</div>
+                    <div>mjamiv / michael.commack@gmail.com</div>
+                    <div style="margin-top: 0.5rem;">Branch: <strong>main</strong></div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Executive Summary -->
+        <section class="executive-summary">
+            <h2><span class="section-icon">★</span> Executive Summary</h2>
+            <div class="summary-grid">
+                <div class="stat-box">
+                    <div class="number">52</div>
+                    <div class="label">Commits</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">24</div>
+                    <div class="label">Files Changed</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">+26K</div>
+                    <div class="label">Lines Added</div>
+                </div>
+                <div class="stat-box">
+                    <div class="number">-8.9K</div>
+                    <div class="label">Lines Removed</div>
+                </div>
+            </div>
+            <ul class="summary-bullets">
+                <li>Major feature: MH Benchmark Cost Estimator with historical project data and statistical estimation</li>
+                <li>Created comprehensive benchmarking data system with 14 discipline-specific JSON files</li>
+                <li>Upgraded AI integration to GPT-5.2 with improved parsing and reliability</li>
+                <li>Enhanced export capabilities: Professional PDF exports, CSV import/export, chart integration</li>
+                <li>UI/UX improvements: Consistent gold/black/yellow theme, centralized navigation, inline editing</li>
+                <li>Documentation overhaul: README, CLAUDE.md, and CODE_REVIEW_ANALYSIS.md updates</li>
+            </ul>
+        </section>
+        
+        <!-- Highlights -->
+        <h2><span class="section-icon">⚡</span> Key Highlights</h2>
+        <div class="highlights">
+            <div class="highlight-card">
+                <h4>🔧 MH Benchmark Cost Estimator</h4>
+                <ul>
+                    <li>Complete cost estimation system with historical data</li>
+                    <li>Statistical estimation from external JSON files</li>
+                    <li>RFP quantity import with AI reasoning</li>
+                    <li>Confidence range visualization</li>
+                </ul>
+            </div>
+            <div class="highlight-card">
+                <h4>🤖 AI-Powered Enhancements</h4>
+                <ul>
+                    <li>Upgraded to GPT-5.2 model</li>
+                    <li>Improved parsing and reliability</li>
+                    <li>AI chat bot integration refinements</li>
+                    <li>Major feature refactoring</li>
+                </ul>
+            </div>
+            <div class="highlight-card">
+                <h4>📊 Benchmarking Data System</h4>
+                <ul>
+                    <li>14 discipline-specific JSON files created</li>
+                    <li>ESDC, TSDC, Track, Bridges, Roadway</li>
+                    <li>Traffic, MOT, Utilities, Drainage</li>
+                    <li>JSON syntax validation and fixes</li>
+                </ul>
+            </div>
+            <div class="highlight-card">
+                <h4>📄 Export & Reporting</h4>
+                <ul>
+                    <li>Professional PDF exports</li>
+                    <li>Performance Chart & Gantt integration</li>
+                    <li>CSV import/export functionality</li>
+                    <li>RFP Wizard and WBS exports</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Commits by Day -->
+        <h2><span class="section-icon">#</span> Commits Summary (52 total)</h2>
+        
+        <div class="day-header">📅 Thursday, January 8, 2026 — 27 commits</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Hash</th>
+                    <th>Commit Message</th>
+                    <th style="width: 70px;">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="hash">4c1233a</span></td><td>Fix JSON syntax errors in benchmarking files</td><td class="date-cell">22:09</td></tr>
+                <tr><td><span class="hash">3e29e27</span></td><td>Fix RFP data transfer and add AI reasoning commentary</td><td class="date-cell">21:56</td></tr>
+                <tr><td><span class="hash">14ecbad</span></td><td>Fix back button on results page and make confidence range more visible</td><td class="date-cell">21:43</td></tr>
+                <tr><td><span class="hash">f31a2c2</span></td><td>Refactor benchmarking to load from JSON files with statistical estimation</td><td class="date-cell">21:26</td></tr>
+                <tr><td><span class="hash">6442d5a</span></td><td>Update README.md with comprehensive codebase documentation</td><td class="date-cell">21:15</td></tr>
+                <tr><td><span class="hash">50ff650</span></td><td>Create benchmarking-esdc.json</td><td class="date-cell">21:08</td></tr>
+                <tr><td><span class="hash">67f712c</span></td><td>Create benchmarking-tsdc.json</td><td class="date-cell">21:07</td></tr>
+                <tr><td><span class="hash">49f97b8</span></td><td>Create benchmarking-bridges.json</td><td class="date-cell">20:55</td></tr>
+                <tr><td><span class="hash">47962ed</span></td><td>Fix MH Benchmark Estimator RFP quantity import</td><td class="date-cell">19:12</td></tr>
+                <tr><td><span class="hash">24f11e5</span></td><td>Add MH Benchmark Cost Estimator with historical project data</td><td class="date-cell">14:39</td></tr>
+                <tr><td><span class="hash">327383f</span></td><td>Add inline WBS editing and code cleanup</td><td class="date-cell">10:45</td></tr>
+            </tbody>
+        </table>
+        <p style="font-size: 0.8rem; color: var(--text-light); margin-top: -0.5rem;">+ 16 additional benchmarking JSON file creation/update commits</p>
+        
+        <div class="day-header">📅 Wednesday, January 7, 2026 — 12 commits</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Hash</th>
+                    <th>Commit Message</th>
+                    <th style="width: 70px;">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="hash">02a7831</span></td><td>Centralize reports and exports in top navigation panel</td><td class="date-cell">17:24</td></tr>
+                <tr><td><span class="hash">a0d2a6c</span></td><td>Update all new features to match gold/black/yellow theme</td><td class="date-cell">16:58</td></tr>
+                <tr><td><span class="hash">03620a4</span></td><td>Major Enhancement: AI-Powered Features and Utility Improvements</td><td class="date-cell">14:03</td></tr>
+                <tr><td><span class="hash">044cb84</span></td><td>Professional PDF exports with cost estimate assumptions</td><td class="date-cell">13:04</td></tr>
+                <tr><td><span class="hash">1f9bca7</span></td><td>Enhance print report with Performance Chart and Gantt Chart</td><td class="date-cell">12:43</td></tr>
+                <tr><td><span class="hash">1466414</span></td><td>Add export functionality for RFP Wizard and WBS results</td><td class="date-cell">12:38</td></tr>
+                <tr><td><span class="hash">59e166e</span></td><td>Fix HTTP/2 protocol error in merge step</td><td class="date-cell">12:02</td></tr>
+                <tr><td><span class="hash">1f38260</span></td><td>Add usage statistics to RFP Wizard</td><td class="date-cell">11:53</td></tr>
+                <tr><td><span class="hash">b2896ae</span></td><td>Remove unsupported temperature parameter from chat bot API call</td><td class="date-cell">11:00</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="day-header">📅 Monday, January 6, 2026 — 8 commits</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Hash</th>
+                    <th>Commit Message</th>
+                    <th style="width: 70px;">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="hash">af98b71</span></td><td>Upgrade to GPT-5.2 with improved parsing and reliability</td><td class="date-cell">22:33</td></tr>
+                <tr><td><span class="hash">d0bc83f</span></td><td>Fix currency formatting in Budget tab (Step 4)</td><td class="date-cell">16:33</td></tr>
+                <tr><td><span class="hash">523bce4</span></td><td>Update chart to stacked bars with percentage labels and add git-push command</td><td class="date-cell">16:10</td></tr>
+                <tr><td><span class="hash">5162b02</span></td><td>Add print report and CSV import/export functionality</td><td class="date-cell">13:29</td></tr>
+                <tr><td><span class="hash">b7f05c6</span></td><td>Move navigation buttons to top banner for consistent placement</td><td class="date-cell">13:22</td></tr>
+                <tr><td><span class="hash">d4de78c</span></td><td>Improve code quality: refactor long functions and add JSDoc documentation</td><td class="date-cell">13:08</td></tr>
+                <tr><td><span class="hash">4453f4b</span></td><td>Add claiming scheme presets to Step 5: Claiming tab</td><td class="date-cell">07:18</td></tr>
+            </tbody>
+        </table>
+        
+        <div class="day-header">📅 Sunday, January 5, 2026 — 5 commits (Initial Setup)</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 90px;">Hash</th>
+                    <th>Commit Message</th>
+                    <th style="width: 70px;">Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><span class="hash">e130d45</span></td><td>Add cost estimator/pricing calculator to Budget tab</td><td class="date-cell">22:30</td></tr>
+                <tr><td><span class="hash">ceb1bef</span></td><td>Update CLAUDE.md documentation for cost estimator feature</td><td class="date-cell">22:34</td></tr>
+                <tr><td><span class="hash">9019eb5</span></td><td>Add CLAUDE.md documentation file</td><td class="date-cell">22:01</td></tr>
+                <tr><td><span class="hash">cd83844</span></td><td>Initial application commit</td><td class="date-cell">18:30</td></tr>
+                <tr><td><span class="hash">fee2d1d</span></td><td>Initial commit</td><td class="date-cell">18:29</td></tr>
+            </tbody>
+        </table>
+        
+        <!-- Files/Modules Touched -->
+        <h2><span class="section-icon">📁</span> Files & Modules Touched</h2>
+        <div class="files-grid">
+            <div class="file-item">
+                <span class="file-icon html">HTML</span>
+                <span class="file-path">index.html <em style="color: var(--text-light);">(26 commits, main app)</em></span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon md">MD</span>
+                <span class="file-path">CLAUDE.md</span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon md">MD</span>
+                <span class="file-path">README.md</span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon md">MD</span>
+                <span class="file-path">CODE_REVIEW_ANALYSIS.md</span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon css">CSS</span>
+                <span class="file-path">css/features/rfp.css</span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon json">JSON</span>
+                <span class="file-path">benchmarking/*.json <em style="color: var(--text-light);">(14 files)</em></span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon md">MD</span>
+                <span class="file-path">.cursor/commands/*.md <em style="color: var(--text-light);">(3 files)</em></span>
+            </div>
+            <div class="file-item">
+                <span class="file-icon" style="background: #718096;">GIT</span>
+                <span class="file-path">.gitignore</span>
+            </div>
+        </div>
+        
+        <h3>Directory Breakdown</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Directory</th>
+                    <th>Files</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td><code>benchmarking/</code></td><td>15</td><td>Complete benchmarking data system with discipline-specific JSON</td></tr>
+                <tr><td><code>.cursor/commands/</code></td><td>3</td><td>Developer tooling (git-push, code-summarizer, next-steps)</td></tr>
+                <tr><td><code>css/features/</code></td><td>1</td><td>Feature-specific styles (RFP)</td></tr>
+                <tr><td><code>/ (root)</code></td><td>5</td><td>Core application files</td></tr>
+            </tbody>
+        </table>
+        
+        <!-- Risks & Follow-ups -->
+        <h2><span class="section-icon">⚠</span> Risks / Follow-ups / Next Steps</h2>
+        <ul class="risks-list">
+            <li class="risk-warning">
+                <span class="risk-icon">⚠️</span>
+                <div><strong>No Automated Tests:</strong> Repository lacks unit/integration tests. Consider adding test coverage for critical features.</div>
+            </li>
+            <li class="risk-warning">
+                <span class="risk-icon">⚠️</span>
+                <div><strong>Large index.html:</strong> Main file is 11,700+ lines. Consider modular refactoring into separate components/modules.</div>
+            </li>
+            <li class="risk-info">
+                <span class="risk-icon">📋</span>
+                <div>Continue benchmarking data validation across all engineering disciplines.</div>
+            </li>
+            <li class="risk-info">
+                <span class="risk-icon">📋</span>
+                <div>Add error handling for JSON file loading failures in the estimator.</div>
+            </li>
+            <li class="risk-info">
+                <span class="risk-icon">📋</span>
+                <div>Consider CI/CD pipeline for automated deployments to GitHub Pages.</div>
+            </li>
+        </ul>
+        
+        <!-- Links -->
+        <section class="links-section">
+            <h2 style="margin-top: 0;"><span class="section-icon">🔗</span> Repository Links</h2>
+            <p><strong>GitHub:</strong> <a href="https://github.com/mjamiv/IPC-Builder">https://github.com/mjamiv/IPC-Builder</a></p>
+            
+            <h3 style="margin-top: 1rem;">Key Commits</h3>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <a href="https://github.com/mjamiv/IPC-Builder/commit/24f11e59fcd8ee342051378764830c3f4e4d3b07" class="commit-link">
+                    <span class="hash">24f11e5</span> MH Benchmark Cost Estimator
+                </a>
+                <a href="https://github.com/mjamiv/IPC-Builder/commit/03620a4688901107c581b78b8d119ba495df4d12" class="commit-link">
+                    <span class="hash">03620a4</span> AI-Powered Features
+                </a>
+                <a href="https://github.com/mjamiv/IPC-Builder/commit/af98b71f0ee335e771945b7e0f8c15da31aa7164" class="commit-link">
+                    <span class="hash">af98b71</span> GPT-5.2 Upgrade
+                </a>
+                <a href="https://github.com/mjamiv/IPC-Builder/commit/f31a2c2fe4b81699d16de4f85658e6bebd4802c7" class="commit-link">
+                    <span class="hash">f31a2c2</span> JSON Benchmarking
+                </a>
+                <a href="https://github.com/mjamiv/IPC-Builder/commit/044cb847f6a8fcd9469cf9a26eae439ba4c1ec43" class="commit-link">
+                    <span class="hash">044cb84</span> PDF Exports
+                </a>
+            </div>
+        </section>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="note">
+                Data Source: git log (GitHub CLI not available). PR-specific data not included.
+            </div>
+            <div>
+                Generated: January 9, 2026 | Branch: main | Remote: origin
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Auto-print for PDF generation
+        window.onload = function() {
+            // Uncomment to auto-trigger print dialog:
+            // window.print();
+        };
+    </script>
+</body>
+</html>
+

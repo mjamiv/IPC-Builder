@@ -9517,26 +9517,57 @@ Return ONLY the JSON, no markdown formatting.`;
 IMPORTANT: NEVER return 0 for quantities if that discipline applies to the project. Always make your best engineering estimate.
 Confidence: "high"=explicit in RFP, "medium"=inferred from context, "low"=estimated from project type`;
 
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-5.2',
-                    messages: [
-                        { role: 'system', content: systemPrompt },
-                        { role: 'user', content: `Analyze this RFP document (chunk ${chunkIndex + 1} of ${totalChunks}). Extract WBS information AND estimate all quantities and project costs based on the scope described. Even if quantities aren't explicitly stated, use your engineering expertise to provide reasonable estimates for man-hour estimation purposes:\n\n${chunkText}` }
-                    ],
-                    max_completion_tokens: 32000,
-                    temperature: 0.3
-                })
-            });
+            // Retry logic with exponential backoff for network errors (HTTP/2 protocol errors)
+            let response = null;
+            let retries = 5;
+            let lastError = null;
+            const baseDelay = 1000; // Start with 1 second
             
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.error?.message || `API error: ${response.status}`);
+            while (retries > 0 && !response) {
+                try {
+                    response = await fetch('https://api.openai.com/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'gpt-5.2',
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                { role: 'user', content: `Analyze this RFP document (chunk ${chunkIndex + 1} of ${totalChunks}). Extract WBS information AND estimate all quantities and project costs based on the scope described. Even if quantities aren't explicitly stated, use your engineering expertise to provide reasonable estimates for man-hour estimation purposes:\n\n${chunkText}` }
+                            ],
+                            max_completion_tokens: 32000,
+                            temperature: 0.3
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        throw new Error(errorData.error?.message || `API error: ${response.status}`);
+                    }
+                } catch (err) {
+                    lastError = err;
+                    retries--;
+                    
+                    // Check if it's a network error (likely HTTP/2 protocol error)
+                    const isNetworkError = err.message.includes('Failed to fetch') || 
+                                          err.message.includes('NetworkError') ||
+                                          err.message.includes('ERR_');
+                    
+                    if (retries > 0 && isNetworkError) {
+                        // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+                        const delay = baseDelay * Math.pow(2, 5 - retries - 1);
+                        console.log(`Chunk ${chunkIndex + 1} network error, retrying in ${delay/1000}s... (${retries} attempts left)`);
+                        document.querySelector('.rfp-loading-text').textContent = `Network error, retrying in ${delay/1000}s... (${retries} attempts left)`;
+                        await new Promise(r => setTimeout(r, delay));
+                        response = null; // Reset to retry
+                    } else if (retries === 0) {
+                        throw new Error(`Network error after 5 retries: ${lastError.message}. Please check your internet connection and try again.`);
+                    } else {
+                        throw err; // Non-network error, don't retry
+                    }
+                }
             }
             
             const data = await response.json();
@@ -9793,10 +9824,11 @@ Merge rules:
 
 Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
 
-            // Retry logic for network errors (HTTP/2 protocol errors)
+            // Retry logic for network errors (HTTP/2 protocol errors) with exponential backoff
             let response = null;
-            let retries = 3;
+            let retries = 5;
             let lastError = null;
+            const baseDelay = 1000;
             
             while (retries > 0 && !response) {
                 try {
@@ -9823,16 +9855,29 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                 } catch (err) {
                     lastError = err;
                     retries--;
-                    response = null;
-                    if (retries > 0) {
+                    
+                    // Check if it's a network error
+                    const isNetworkError = err.message.includes('Failed to fetch') || 
+                                          err.message.includes('NetworkError') ||
+                                          err.message.includes('ERR_');
+                    
+                    if (retries > 0 && isNetworkError) {
+                        // Exponential backoff
+                        const delay = baseDelay * Math.pow(2, 5 - retries - 1);
+                        console.log(`Merge API call failed, retrying in ${delay/1000}s... (${retries} attempts left):`, err.message);
+                        await new Promise(r => setTimeout(r, delay));
+                        response = null;
+                    } else if (retries > 0) {
+                        // Non-network error, still retry but with shorter delay
                         console.log(`Merge API call failed, retrying... (${retries} attempts left):`, err.message);
-                        await new Promise(r => setTimeout(r, 3000)); // Wait 3 seconds before retry
+                        await new Promise(r => setTimeout(r, 2000));
+                        response = null;
                     }
                 }
             }
             
             if (!response) {
-                throw lastError || new Error('Failed to merge chunk results after multiple attempts');
+                throw new Error(`Failed to merge results after 5 retries: ${lastError?.message || 'Unknown error'}. Please check your internet connection and try again.`);
             }
 
             const data = await response.json();
@@ -10062,19 +10107,8 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                         const avgTime = i > 0 ? ((Date.now() - analysisStartTime) / i / 1000).toFixed(1) : '?';
                         document.querySelector('.rfp-loading-text').textContent = `Analyzing chunk ${i + 1}/${chunks.length} (avg ${avgTime}s/chunk, optimized prompts)...`;
 
-                        // Retry logic for network errors
-                        let result = null;
-                        let retries = 3;
-                        while (retries > 0 && !result) {
-                            try {
-                                result = await analyzeChunk(apiKey, chunks[i], i, chunks.length);
-                            } catch (err) {
-                                retries--;
-                                if (retries === 0) throw err;
-                                console.log(`Chunk ${i + 1} failed, retrying... (${retries} attempts left)`);
-                                await new Promise(r => setTimeout(r, 2000)); // Wait 2 seconds before retry
-                            }
-                        }
+                        // analyzeChunk now has its own internal retry logic with exponential backoff
+                        const result = await analyzeChunk(apiKey, chunks[i], i, chunks.length);
                         
                         // Accumulate usage stats from each chunk
                         if (result.usage) {
@@ -10148,7 +10182,23 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
                 
             } catch (error) {
                 console.error('RFP analysis error:', error);
-                alert('Error analyzing document: ' + error.message);
+                
+                // Provide user-friendly error message with suggestions
+                let errorMsg = 'Error analyzing document:\n\n' + error.message;
+                
+                if (error.message.includes('Failed to fetch') || 
+                    error.message.includes('NetworkError') || 
+                    error.message.includes('ERR_') ||
+                    error.message.includes('Network error')) {
+                    errorMsg += '\n\n💡 Suggestions:\n' +
+                        '• Check your internet connection\n' +
+                        '• Try disabling browser extensions (especially ad blockers)\n' +
+                        '• Try using an incognito/private window\n' +
+                        '• If on a corporate network, contact your IT team\n' +
+                        '• Wait a moment and try again';
+                }
+                
+                alert(errorMsg);
                 goToRfpStage(2);
             }
         }
