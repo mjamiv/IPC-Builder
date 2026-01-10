@@ -12375,6 +12375,8 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
         window.analyzeRfpDocument = analyzeRfpDocument;
         window.applyRfpData = applyRfpData;
         window.exportRfpData = exportRfpData;
+        window.updateRfpQuantity = updateRfpQuantity;
+        window.showQuantityReasoning = showQuantityReasoning;
         
         // Reports
         window.openReportsPanel = openReportsPanel;
