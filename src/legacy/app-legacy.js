@@ -11617,7 +11617,6 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
         window.updateReportsButtonVisibility = updateReportsButtonVisibility;
         
         // Export functions
-        window.exportProjectSummary = exportProjectSummary;
         window.printReport = printReport;
         
         // AI and Chat helpers
