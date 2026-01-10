@@ -10239,12 +10239,13 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             .no-break { page-break-inside: avoid; }
         }
         
-        /* Force professional fonts on all elements for html2canvas compatibility */
+        /* Force professional fonts and BLACK text on all elements */
         * { 
             box-sizing: border-box; 
             margin: 0; 
             padding: 0;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         
         html, body {
@@ -10255,13 +10256,15 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             line-height: 1.5;
         }
         
-        /* Ensure all text elements use professional fonts */
+        /* Ensure all text elements use professional fonts and BLACK text */
         div, span, p, h1, h2, h3, h4, h5, h6, td, th, li, label, strong, em, b, i {
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         
         table, thead, tbody, tfoot, tr {
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         
         /* Cover Page */
@@ -10283,12 +10286,14 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         .cover-subtitle {
             font-size: 14pt;
             margin-bottom: 60px;
             font-style: italic;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         .cover-metrics {
             display: flex;
@@ -10306,18 +10311,21 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             font-size: 24pt;
             font-weight: bold;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         .cover-metric-label {
             font-size: 9pt;
             text-transform: uppercase;
             margin-top: 5px;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         .cover-date {
             position: absolute;
             bottom: 60px;
             font-size: 11pt;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         
         /* Page Layout */
@@ -10340,11 +10348,13 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             letter-spacing: 1px;
             margin-bottom: 5px;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         .chapter-title {
             font-size: 18pt;
             font-weight: bold;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         
         /* Typography */
@@ -10385,12 +10395,14 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             font-size: 18pt;
             font-weight: bold;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         .kpi-label {
             font-size: 8pt;
             text-transform: uppercase;
             margin-top: 3px;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         
         /* Tables */
@@ -10410,6 +10422,7 @@ Chunks: ${JSON.stringify(complexFieldsOnly, null, 2)}`;
             font-size: 8pt;
             text-transform: uppercase;
             font-family: Cambria, Georgia, 'Times New Roman', Times, serif !important;
+            color: #000 !important;
         }
         tbody td {
             border: 1px solid #000;
